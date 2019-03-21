@@ -187,6 +187,9 @@ Maven '`project properties`' via `@..@` placeholders, e.g.
 	app.java.version=@java.version@
 ----
 
+NOTE: Only production configuration is filtered that way (i.e. no filtering is applied on
+`src/test/resources`).
+
 TIP: The `spring-boot:run` can add `src/main/resources` directly to the classpath
 (for hot reloading purposes) if you enable the `addResources` flag. This circumvents
 the resource filtering and this feature. You can use the `exec:java` goal instead
@@ -1269,25 +1272,31 @@ configure various aspects of its processing. These features are described in six
 Jackson which map onto properties in the environment:
 
 |===
-|Jackson enum|Environment property
+|Enum|Property|Values
 
 |`com.fasterxml.jackson.databind.DeserializationFeature`
-|`spring.jackson.deserialization.<feature_name>=true\|false`
+|`spring.jackson.deserialization.<feature_name>`
+|`true`, `false`
 
 |`com.fasterxml.jackson.core.JsonGenerator.Feature`
-|`spring.jackson.generator.<feature_name>=true\|false`
+|`spring.jackson.generator.<feature_name>`
+|`true`, `false`
 
 |`com.fasterxml.jackson.databind.MapperFeature`
-|`spring.jackson.mapper.<feature_name>=true\|false`
+|`spring.jackson.mapper.<feature_name>`
+|`true`, `false`
 
 |`com.fasterxml.jackson.core.JsonParser.Feature`
-|`spring.jackson.parser.<feature_name>=true\|false`
+|`spring.jackson.parser.<feature_name>`
+|`true`, `false`
 
 |`com.fasterxml.jackson.databind.SerializationFeature`
-|`spring.jackson.serialization.<feature_name>=true\|false`
+|`spring.jackson.serialization.<feature_name>`
+|`true`, `false`
 
 |`com.fasterxml.jackson.annotation.JsonInclude.Include`
-|`spring.jackson.default-property-inclusion=always\|non_null\|non_absent\|non_default\|non_empty`
+|`spring.jackson.default-property-inclusion`
+|`always`, `non_null`, `non_absent`, `non_default`, `non_empty`
 |===
 
 For example, to enable pretty print, set `spring.jackson.serialization.indent_output=true`.
@@ -1482,6 +1491,30 @@ that is compatible with Thymeleaf 3.0.
 
 
 
+[[howto-jersey]]
+== Jersey
+
+
+
+[[howto-jersey-spring-security]]
+=== Secure Jersey endpoints with Spring Security
+Spring Security can be used to secure a Jersey-based web application in much the same
+way as it can be used to secure a Spring MVC-based web application. However, if you want
+to use Spring Security's method-level security with Jersey, you must configure Jersey to
+use `setStatus(int)` rather `sendError(int)`. This prevents Jersey from committing the
+response before Spring Security has had an opportunity to report an authentication or
+authorization failure to the client.
+
+The `jersey.config.server.response.setStatusOverSendError` must be set to `true` on the
+application's `ResourceConfig` bean, as shown in the following example:
+
+[source,java,indent=0]
+----
+include::{code-examples}/jersey/JerseySetStatusOverSendErrorExample.java[tag=resource-config]
+----
+
+
+
 [[howto-http-clients]]
 == HTTP clients
 
@@ -1621,7 +1654,7 @@ instead. If you aren't using the starters then you need to provide `jcl-over-slf
 (at least) in addition to Log4j 2.
 
 The simplest path is probably through the starters, even though it requires some
-jiggling with excludes, .e.g. in Maven:
+jiggling with excludes. The following example shows how to set up the starters in Maven:
 
 [source,xml,indent=0,subs="verbatim,quotes,attributes"]
 ----
@@ -1645,10 +1678,32 @@ jiggling with excludes, .e.g. in Maven:
 	</dependency>
 ----
 
+And the following example shows one way to set up the starters in Gradle:
+
+[source,groovy,indent=0,subs="verbatim,quotes,attributes"]
+----
+	dependencies {
+		compile 'org.springframework.boot:spring-boot-starter-web'
+		compile 'org.springframework.boot:spring-boot-starter-log4j2'
+	}
+
+	configurations {
+		all {
+			exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
+		}
+	}
+----
+
+
 NOTE: The use of the Log4j starters gathers together the dependencies for common logging
 requirements (e.g. including having Tomcat use `java.util.logging` but configuring the
 output using Log4j 2). See the Actuator Log4j 2 samples for more detail and to see it in
 action.
+
+NOTE: To ensure that debug logging performed using `java.util.logging` is routed into
+Log4j 2, configure its https://logging.apache.org/log4j/2.0/log4j-jul/index.html[JDK
+logging adapter] by setting the `java.util.logging.manager` system property to
+`org.apache.logging.log4j.jul.LogManager`.
 
 
 
@@ -2021,13 +2076,13 @@ If you are using Spring Data, you need to configure `@EnableJpaRepositories` acc
 
 [[howto-use-traditional-persistence-xml]]
 === Use a traditional persistence.xml
-Spring doesn't require the use of XML to configure the JPA provider, and Spring Boot
-assumes you want to take advantage of that feature. If you prefer to use `persistence.xml`
-then you need to define your own `@Bean` of type `LocalEntityManagerFactoryBean` (with
-id '`entityManagerFactory`', and set the persistence unit name there.
+Spring Boot will not search for or use a `META-INF/persistence.xml` by default. If you
+prefer to use a traditional `persistence.xml`, you need to define your own `@Bean` of type
+`LocalEntityManagerFactoryBean` (with id '`entityManagerFactory`', and set the persistence
+unit name there.
 
 See
-https://github.com/spring-projects/spring-boot/blob/master/spring-boot-autoconfigure/src/main/java/org/springframework/boot/autoconfigure/orm/jpa/JpaBaseConfiguration.java[`JpaBaseConfiguration`]
+{sc-spring-boot-autoconfigure}/orm/jpa/JpaBaseConfiguration.{sc-ext}[`JpaBaseConfiguration`]
 for the default settings.
 
 
@@ -2058,7 +2113,7 @@ respectively.
 Spring Data REST can expose the `Repository` implementations as REST endpoints for you as
 long as Spring MVC has been enabled for the application.
 
-Spring Boot exposes as set of useful properties from the `spring.data.rest` namespace that
+Spring Boot exposes a set of useful properties from the `spring.data.rest` namespace that
 customize the
 {spring-data-rest-javadoc}/core/config/RepositoryRestConfiguration.{dc-ext}[`RepositoryRestConfiguration`].
 If you need to provide additional customization, you should use a
@@ -2089,6 +2144,19 @@ configured to depend on the `elasticsearchClient` bean:
 ----
 include::{code-examples}/elasticsearch/HibernateSearchElasticsearchExample.java[tag=configuration]
 ----
+
+
+
+[[howto-configure-jOOQ-with-multiple-datasources]]
+=== Configure jOOQ with Two DataSources
+If you need to use jOOQ with multiple data sources, you should create your own
+`DSLContext` for each, refer to
+{sc-spring-boot-autoconfigure}/jooq/JooqAutoConfiguration.{sc-ext}[JooqAutoConfiguration]
+for more details.
+
+TIP: In particular, `JooqExceptionTranslator` and `SpringTransactionProvider` can be
+reused to provide similar features to what the auto-configuration does with a single
+`DataSource`.
 
 
 
@@ -2133,30 +2201,24 @@ is a Hibernate feature (nothing to do with Spring).
 
 
 [[howto-initialize-a-database-using-spring-jdbc]]
-=== Initialize a database using Spring JDBC
-Spring JDBC has a `DataSource` initializer feature. Spring Boot enables it by default and
-loads SQL from the standard locations `schema.sql` and `data.sql` (in the root of the
-classpath). In addition Spring Boot will load the `schema-${platform}.sql`
-and `data-${platform}.sql` files (if present), where
-`platform` is the value of `spring.datasource.platform`, e.g. you might choose to set
-it to the vendor name of the database (`hsqldb`, `h2`, `oracle`, `mysql`,
-`postgresql` etc.). Spring Boot enables the fail-fast feature of the Spring JDBC
-initializer by default, so if the scripts cause exceptions the application will fail
-to start. The script locations can be changed by setting `spring.datasource.schema` and
-`spring.datasource.data`, and neither location will be processed if
-`spring.datasource.initialize=false`.
+=== Initialize a database
+Spring Boot can automatically create the schema (DDL scripts) of your `DataSource` and
+initialize it (DML scripts): it loads SQL from the standard root classpath locations
+`schema.sql` and `data.sql`, respectively. In addition Spring Boot will process the
+`schema-${platform}.sql` and `data-${platform}.sql` files (if present), where `platform`
+is the value of `spring.datasource.platform`. This allows you to switch to database
+specific scripts if necessary, e.g. you might choose to set it to the vendor name of the
+database (`hsqldb`, `h2`, `oracle`, `mysql`, `postgresql` etc.).
 
-To disable the fail-fast you can set `spring.datasource.continue-on-error=true`. This can be
-useful once an application has matured and been deployed a few times, since the scripts
-can act as '`poor man's migrations`' -- inserts that fail mean that the data is already
-there, so there would be no need to prevent the application from running, for instance.
+Spring Boot enables the fail-fast feature of the Spring JDBC initializer by default, so if
+the scripts cause exceptions the application will fail to start. You can tune that using
+`spring.datasource.continue-on-error`.
 
-If you want to use the `schema.sql` initialization in a JPA app (with
-Hibernate) then `ddl-auto=create-drop` will lead to errors if
-Hibernate tries to create the same tables.  To avoid those errors set
-`ddl-auto` explicitly to "" (preferable) or "none". Whether or not you use
-`ddl-auto=create-drop` you can always use `data.sql` to initialize new
-data.
+NOTE: In a JPA-based app, you can choose to let Hibernate create the schema or use
+`schema.sql` but not both. Make sure to disable `spring.jpa.hibernate.ddl-auto` if you
+chose the later.
+
+You can also disable initialization by setting `spring.datasource.initialize` to `false`.
 
 
 
@@ -2184,8 +2246,18 @@ To automatically run Flyway database migrations on startup, add the
 
 The migrations are scripts in the form `V<VERSION>__<NAME>.sql` (with `<VERSION>` an
 underscore-separated version, e.g. '`1`' or '`2_1`'). By default they live in a folder
-`classpath:db/migration` but you can modify that using `flyway.locations`. You can also
-add a special `{vendor}` placeholder to use vendor-specific scripts. Assume the following:
+`classpath:db/migration` but you can modify that using `flyway.locations`. This is a
+comma-separated list of one or more `classpath:` or `filesystem:` locations. For example,
+the following configuration would search for scripts in both the default classpath
+location and the `/opt/migration` directory:
+
+[source,properties,indent=0]
+----
+	flyway.locations=classpath:db/migration,filesystem:/opt/migration
+----
+
+You can also add a special `{vendor}` placeholder to use vendor-specific scripts. Assume
+the following:
 
 [source,properties,indent=0]
 ----
@@ -2364,6 +2436,22 @@ how to register handlers in the servlet container.
 
 
 
+[[howto-sanitize-sensible-values]]
+=== Sanitize sensible values
+Information returned by the `env` and `configprops` endpoints can be somewhat sensitive
+so keys matching a certain pattern are sanitized by default (i.e. their values are
+replaced by `+******+`).
+
+Spring Boot uses sensible defaults for such keys: for instance, any key ending with the
+word "password", "secret", "key" or "token" is sanitized. It is also possible to use a
+regular expression instead, such as `+*credentials.*+` to sanitize any key that holds the
+word `credentials` as part of the key.
+
+The patterns to use can be customized using the `endpoints.env.keys-to-sanitize` and
+`endpoints.configprops.keys-to-sanitize` respectively.
+
+
+
 [[howto-use-actuator-with-jersey]]
 === Actuator and Jersey
 Actuator HTTP endpoints are only available for Spring MVC-based applications. If you want
@@ -2460,8 +2548,8 @@ by adding some entries to `application.properties`, e.g.
 
 [source,properties,indent=0]
 ----
-	server.tomcat.remote_ip_header=x-forwarded-for
-	server.tomcat.protocol_header=x-forwarded-proto
+	server.tomcat.remote-ip-header=x-forwarded-for
+	server.tomcat.protocol-header=x-forwarded-proto
 ----
 
 (The presence of either of those properties will switch on the valve. Or you can add the
@@ -2718,6 +2806,11 @@ https://plugins.gradle.org/plugin/com.gorylenko.gradle-git-properties[`gradle-gi
 	}
 ----
 
+TIP: The commit time in `git.properties` is expected to match the format
+`yyyy-MM-dd'T'HH:mm:ssZ`. This is the default format for both plugins listed above. Using this format
+allows the time to be parsed into a `Date` and its format when serialized to JSON to be controlled by
+Jackson's date serialization configuration settings.
+
 
 
 [[howto-customize-dependency-versions-with-maven]]
@@ -2855,7 +2948,12 @@ jar support which assumes that the `jruby-complete.jar` is always directly avail
 file in its own right.
 
 To deal with any problematic libraries, you can flag that specific nested jars should be
-automatically unpacked to the '`temp folder`' when the executable jar first runs.
+automatically unpacked when the executable jar first runs. Such nested jars are written
+beneath the temporary directory identified by the `java.io.tmpdir` system property.
+
+WARNING: Care should be taken to ensure that your operating system is configured so that
+it will not delete the jars that have been unpacked to the temporary directory while the
+application is still running.
 
 For example, to indicate that JRuby should be flagged for unpack using the Maven Plugin
 you would add the following configuration:

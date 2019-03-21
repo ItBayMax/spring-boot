@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -92,6 +92,10 @@ public class EnvironmentEndpointTests extends AbstractEndpointTests<EnvironmentE
 		assertThat(systemProperties.get("mySecret")).isEqualTo("******");
 		assertThat(systemProperties.get("myCredentials")).isEqualTo("******");
 		assertThat(systemProperties.get("VCAP_SERVICES")).isEqualTo("******");
+		Object command = systemProperties.get("sun.java.command");
+		if (command != null) {
+			assertThat(command).isEqualTo("******");
+		}
 		clearSystemProperties("dbPassword", "apiKey", "mySecret", "myCredentials");
 	}
 
@@ -277,6 +281,26 @@ public class EnvironmentEndpointTests extends AbstractEndpointTests<EnvironmentE
 		Map<String, Object> testProperties = (Map<String, Object>) env.get("test");
 		Map<String, String> foo = (Map<String, String>) testProperties.get("foo");
 		assertThat(foo.get("bar")).isEqualTo("baz");
+	}
+
+	@SuppressWarnings("unchecked")
+	@Test
+	public void multipleSourcesWithSameProperty() {
+		this.context = new AnnotationConfigApplicationContext();
+		MutablePropertySources propertySources = this.context.getEnvironment()
+				.getPropertySources();
+		propertySources.addFirst(new MapPropertySource("one",
+				Collections.<String, Object>singletonMap("a", "alpha")));
+		propertySources.addFirst(new MapPropertySource("two",
+				Collections.<String, Object>singletonMap("a", "apple")));
+		this.context.register(Config.class);
+		this.context.refresh();
+		EnvironmentEndpoint report = getEndpointBean();
+		Map<String, Object> env = report.invoke();
+		Map<String, Object> sourceOne = (Map<String, Object>) env.get("one");
+		assertThat(sourceOne).containsEntry("a", "alpha");
+		Map<String, Object> sourceTwo = (Map<String, Object>) env.get("two");
+		assertThat(sourceTwo).containsEntry("a", "apple");
 	}
 
 	private void clearSystemProperties(String... properties) {

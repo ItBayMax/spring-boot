@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -55,7 +55,7 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
  * MVC on the classpath). Note that any endpoints having method signatures will break in a
  * non-servlet environment.
  *
- * @param <E> The endpoint type
+ * @param <E> the endpoint type
  * @author Phillip Webb
  * @author Christian Dupuis
  * @author Dave Syer
@@ -150,7 +150,7 @@ public abstract class AbstractEndpointHandlerMapping<E extends MvcEndpoint>
 		}
 		Assert.state(handler instanceof MvcEndpoint, "Only MvcEndpoints are supported");
 		String path = getPath((MvcEndpoint) handler);
-		return (path == null ? null : getEndpointPatterns(path, mapping));
+		return (path != null) ? getEndpointPatterns(path, mapping) : null;
 	}
 
 	/**
@@ -163,8 +163,8 @@ public abstract class AbstractEndpointHandlerMapping<E extends MvcEndpoint>
 	}
 
 	private String[] getEndpointPatterns(String path, RequestMappingInfo mapping) {
-		String patternPrefix = StringUtils.hasText(this.prefix) ? this.prefix + path
-				: path;
+		String patternPrefix = (StringUtils.hasText(this.prefix) ? this.prefix + path
+				: path);
 		Set<String> defaultPatterns = mapping.getPatternsCondition().getPatterns();
 		if (defaultPatterns.isEmpty()) {
 			return new String[] { patternPrefix, patternPrefix + ".json" };

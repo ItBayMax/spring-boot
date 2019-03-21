@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -34,8 +34,9 @@ import org.springframework.core.ResolvableType;
 
 /**
  * {@link ApplicationContextInitializer} that writes the {@link ConditionEvaluationReport}
- * to the log. Reports are logged at the {@link LogLevel#DEBUG DEBUG} level unless there
- * was a problem, in which case they are the {@link LogLevel#INFO INFO} level is used.
+ * to the log. Reports are logged at the {@link LogLevel#DEBUG DEBUG} level. A crash
+ * report triggers an info output suggesting the user runs again with debug enabled to
+ * display the report.
  * <p>
  * This initializer is not intended to be shared across multiple application context
  * instances.

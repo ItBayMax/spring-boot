@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,6 +18,7 @@ package org.springframework.boot.test.autoconfigure;
 
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
@@ -30,6 +31,7 @@ import org.springframework.test.context.TestContext;
 import org.springframework.test.context.support.DependencyInjectionTestExecutionListener;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.containsString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
@@ -43,6 +45,9 @@ public class SpringBootDependencyInjectionTestExecutionListenerTests {
 
 	@Rule
 	public OutputCapture out = new OutputCapture();
+
+	@Rule
+	public ExpectedException thrown = ExpectedException.none();
 
 	private SpringBootDependencyInjectionTestExecutionListener reportListener = new SpringBootDependencyInjectionTestExecutionListener();
 
@@ -71,6 +76,18 @@ public class SpringBootDependencyInjectionTestExecutionListenerTests {
 		this.out.expect(containsString("AUTO-CONFIGURATION REPORT"));
 		this.out.expect(containsString("Positive matches"));
 		this.out.expect(containsString("Negative matches"));
+	}
+
+	@Test
+	public void originalFailureIsThrownWhenReportGenerationFails() throws Exception {
+		TestContext testContext = mock(TestContext.class);
+		IllegalStateException originalFailure = new IllegalStateException();
+		given(testContext.getTestInstance()).willThrow(originalFailure);
+		SpringApplication application = new SpringApplication(Config.class);
+		application.setWebEnvironment(false);
+		given(testContext.getApplicationContext()).willThrow(new RuntimeException());
+		this.thrown.expect(is(originalFailure));
+		this.reportListener.prepareTestInstance(testContext);
 	}
 
 	@Configuration

@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -145,8 +145,8 @@ public class RepackageTask extends DefaultTask {
 		SpringBootPluginExtension extension = project.getExtensions()
 				.getByType(SpringBootPluginExtension.class);
 		ProjectLibraries libraries = new ProjectLibraries(project, extension,
-				this.excludeDevtools == null ? extension.isExcludeDevtools()
-						: this.excludeDevtools);
+				(this.excludeDevtools != null) ? this.excludeDevtools
+						: extension.isExcludeDevtools());
 		if (extension.getProvidedConfiguration() != null) {
 			libraries.setProvidedConfigurationName(extension.getProvidedConfiguration());
 		}
@@ -293,18 +293,18 @@ public class RepackageTask extends DefaultTask {
 		}
 
 		private boolean isExecutable() {
-			return RepackageTask.this.executable != null ? RepackageTask.this.executable
+			return (RepackageTask.this.executable != null) ? RepackageTask.this.executable
 					: this.extension.isExecutable();
 		}
 
 		private File getEmbeddedLaunchScript() {
-			return RepackageTask.this.embeddedLaunchScript != null
+			return (RepackageTask.this.embeddedLaunchScript != null)
 					? RepackageTask.this.embeddedLaunchScript
 					: this.extension.getEmbeddedLaunchScript();
 		}
 
 		private Map<String, String> getEmbeddedLaunchScriptProperties() {
-			return RepackageTask.this.embeddedLaunchScriptProperties != null
+			return (RepackageTask.this.embeddedLaunchScriptProperties != null)
 					? RepackageTask.this.embeddedLaunchScriptProperties
 					: this.extension.getEmbeddedLaunchScriptProperties();
 		}

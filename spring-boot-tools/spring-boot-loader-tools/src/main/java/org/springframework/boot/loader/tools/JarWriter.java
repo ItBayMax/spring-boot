@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2016 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -140,6 +140,9 @@ public class JarWriter implements LoaderClassesWriter {
 					inputStream = new ZipHeaderPeekInputStream(
 							jarFile.getInputStream(entry));
 				}
+				else {
+					entry.setCompressedSize(-1);
+				}
 				EntryWriter entryWriter = new InputStreamEntryWriter(inputStream, true);
 				JarEntry transformedEntry = entryTransformer.transform(entry);
 				if (transformedEntry != null) {
@@ -154,8 +157,8 @@ public class JarWriter implements LoaderClassesWriter {
 
 	/**
 	 * Writes an entry. The {@code inputStream} is closed once the entry has been written
-	 * @param entryName The name of the entry
-	 * @param inputStream The stream from which the entry's data can be read
+	 * @param entryName the name of the entry
+	 * @param inputStream the stream from which the entry's data can be read
 	 * @throws IOException if the write fails
 	 */
 	@Override
@@ -300,7 +303,7 @@ public class JarWriter implements LoaderClassesWriter {
 		@Override
 		public void write(OutputStream outputStream) throws IOException {
 			byte[] buffer = new byte[BUFFER_SIZE];
-			int bytesRead = -1;
+			int bytesRead;
 			while ((bytesRead = this.inputStream.read(buffer)) != -1) {
 				outputStream.write(buffer, 0, bytesRead);
 			}
@@ -315,26 +318,34 @@ public class JarWriter implements LoaderClassesWriter {
 	/**
 	 * {@link InputStream} that can peek ahead at zip header bytes.
 	 */
-	private static class ZipHeaderPeekInputStream extends FilterInputStream {
+	static class ZipHeaderPeekInputStream extends FilterInputStream {
 
 		private static final byte[] ZIP_HEADER = new byte[] { 0x50, 0x4b, 0x03, 0x04 };
 
 		private final byte[] header;
+
+		private final int headerLength;
+
+		private int position;
 
 		private ByteArrayInputStream headerStream;
 
 		protected ZipHeaderPeekInputStream(InputStream in) throws IOException {
 			super(in);
 			this.header = new byte[4];
-			int len = in.read(this.header);
-			this.headerStream = new ByteArrayInputStream(this.header, 0, len);
+			this.headerLength = in.read(this.header);
+			this.headerStream = new ByteArrayInputStream(this.header, 0,
+					this.headerLength);
 		}
 
 		@Override
 		public int read() throws IOException {
-			int read = (this.headerStream == null ? -1 : this.headerStream.read());
+			int read = (this.headerStream != null) ? this.headerStream.read() : -1;
 			if (read != -1) {
-				this.headerStream = null;
+				this.position++;
+				if (this.position >= this.headerLength) {
+					this.headerStream = null;
+				}
 				return read;
 			}
 			return super.read();
@@ -347,17 +358,34 @@ public class JarWriter implements LoaderClassesWriter {
 
 		@Override
 		public int read(byte[] b, int off, int len) throws IOException {
-			int read = (this.headerStream == null ? -1
-					: this.headerStream.read(b, off, len));
-			if (read != -1) {
-				this.headerStream = null;
-				return read;
+			int read = (this.headerStream != null) ? this.headerStream.read(b, off, len)
+					: -1;
+			if (read <= 0) {
+				return readRemainder(b, off, len);
 			}
-			return super.read(b, off, len);
+			this.position += read;
+			if (read < len) {
+				int remainderRead = readRemainder(b, off + read, len - read);
+				if (remainderRead > 0) {
+					read += remainderRead;
+				}
+			}
+			if (this.position >= this.headerLength) {
+				this.headerStream = null;
+			}
+			return read;
 		}
 
 		public boolean hasZipHeader() {
 			return Arrays.equals(this.header, ZIP_HEADER);
+		}
+
+		private int readRemainder(byte[] b, int off, int len) throws IOException {
+			int read = super.read(b, off, len);
+			if (read > 0) {
+				this.position += read;
+			}
+			return read;
 		}
 
 	}
@@ -387,7 +415,7 @@ public class JarWriter implements LoaderClassesWriter {
 
 		private void load(InputStream inputStream) throws IOException {
 			byte[] buffer = new byte[BUFFER_SIZE];
-			int bytesRead = -1;
+			int bytesRead;
 			while ((bytesRead = inputStream.read(buffer)) != -1) {
 				this.crc.update(buffer, 0, bytesRead);
 				this.size += bytesRead;

@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2016 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,6 +16,7 @@
 
 package org.springframework.boot.bind;
 
+import java.beans.PropertyEditor;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -35,6 +36,7 @@ import org.springframework.beans.InvalidPropertyException;
 import org.springframework.beans.MutablePropertyValues;
 import org.springframework.beans.NotWritablePropertyException;
 import org.springframework.beans.PropertyValue;
+import org.springframework.beans.propertyeditors.FileEditor;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.core.convert.TypeDescriptor;
 import org.springframework.core.env.StandardEnvironment;
@@ -58,6 +60,13 @@ import org.springframework.validation.DataBinder;
  */
 public class RelaxedDataBinder extends DataBinder {
 
+	private static final Set<Class<?>> EXCLUDED_EDITORS;
+	static {
+		Set<Class<?>> excluded = new HashSet<Class<?>>();
+		excluded.add(FileEditor.class);
+		EXCLUDED_EDITORS = Collections.unmodifiableSet(excluded);
+	}
+
 	private static final Object BLANK = new Object();
 
 	private String namePrefix;
@@ -77,7 +86,7 @@ public class RelaxedDataBinder extends DataBinder {
 	/**
 	 * Create a new {@link RelaxedDataBinder} instance.
 	 * @param target the target into which properties are bound
-	 * @param namePrefix An optional prefix to be used when reading properties
+	 * @param namePrefix an optional prefix to be used when reading properties
 	 */
 	public RelaxedDataBinder(Object target, String namePrefix) {
 		super(wrapTarget(target),
@@ -385,14 +394,14 @@ public class RelaxedDataBinder extends DataBinder {
 		if (propertyName == null) {
 			propertyName = resolveNestedPropertyName(target, prefix, name);
 		}
-		return (propertyName == null ? name : propertyName);
+		return (propertyName != null) ? propertyName : name;
 	}
 
 	private String resolveNestedPropertyName(BeanWrapper target, String prefix,
 			String name) {
 		StringBuilder candidate = new StringBuilder();
 		for (String field : name.split("[_\\-\\.]")) {
-			candidate.append(candidate.length() > 0 ? "." : "");
+			candidate.append((candidate.length() > 0) ? "." : "");
 			candidate.append(field);
 			String nested = resolvePropertyName(target, prefix, candidate.toString());
 			if (nested != null) {
@@ -451,6 +460,24 @@ public class RelaxedDataBinder extends DataBinder {
 			target = new MapHolder(map);
 		}
 		return target;
+	}
+
+	@Override
+	public void registerCustomEditor(Class<?> requiredType,
+			PropertyEditor propertyEditor) {
+		if (propertyEditor == null
+				|| !EXCLUDED_EDITORS.contains(propertyEditor.getClass())) {
+			super.registerCustomEditor(requiredType, propertyEditor);
+		}
+	}
+
+	@Override
+	public void registerCustomEditor(Class<?> requiredType, String field,
+			PropertyEditor propertyEditor) {
+		if (propertyEditor == null
+				|| !EXCLUDED_EDITORS.contains(propertyEditor.getClass())) {
+			super.registerCustomEditor(requiredType, field, propertyEditor);
+		}
 	}
 
 	/**
@@ -712,7 +739,7 @@ public class RelaxedDataBinder extends DataBinder {
 		}
 
 		private boolean isBenign(PropertyOrigin origin) {
-			String name = (origin == null ? null : origin.getSource().getName());
+			String name = (origin != null) ? origin.getSource().getName() : null;
 			return BENIGN_PROPERTY_SOURCE_NAMES.contains(name);
 		}
 

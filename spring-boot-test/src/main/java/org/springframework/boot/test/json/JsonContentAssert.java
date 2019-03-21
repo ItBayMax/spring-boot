@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -26,12 +26,11 @@ import com.jayway.jsonpath.JsonPath;
 import org.assertj.core.api.AbstractAssert;
 import org.assertj.core.api.AbstractBooleanAssert;
 import org.assertj.core.api.AbstractCharSequenceAssert;
-import org.assertj.core.api.AbstractListAssert;
-import org.assertj.core.api.AbstractMapAssert;
 import org.assertj.core.api.AbstractObjectAssert;
 import org.assertj.core.api.Assert;
 import org.assertj.core.api.Assertions;
-import org.assertj.core.api.ObjectAssert;
+import org.assertj.core.api.ListAssert;
+import org.assertj.core.api.MapAssert;
 import org.skyscreamer.jsonassert.JSONCompare;
 import org.skyscreamer.jsonassert.JSONCompareMode;
 import org.skyscreamer.jsonassert.JSONCompareResult;
@@ -947,12 +946,13 @@ public class JsonContentAssert extends AbstractAssert<JsonContentAssert, CharSeq
 	 * @param expression the {@link JsonPath} expression
 	 * @param args arguments to parameterize the {@code JsonPath} expression with, using
 	 * formatting specifiers defined in {@link String#format(String, Object...)}
+	 * @param <E> element type
 	 * @return a new assertion object whose object under test is the extracted item
 	 * @throws AssertionError if the path is not valid or does not result in an array
 	 */
 	@SuppressWarnings("unchecked")
-	public AbstractListAssert<?, ?, Object, ObjectAssert<Object>> extractingJsonPathArrayValue(
-			CharSequence expression, Object... args) {
+	public <E> ListAssert<E> extractingJsonPathArrayValue(CharSequence expression,
+			Object... args) {
 		return Assertions.assertThat(
 				extractingJsonPathValue(expression, args, List.class, "an array"));
 	}
@@ -962,12 +962,14 @@ public class JsonContentAssert extends AbstractAssert<JsonContentAssert, CharSeq
 	 * @param expression the {@link JsonPath} expression
 	 * @param args arguments to parameterize the {@code JsonPath} expression with, using
 	 * formatting specifiers defined in {@link String#format(String, Object...)}
+	 * @param <K> key type
+	 * @param <V> value type
 	 * @return a new assertion object whose object under test is the extracted item
 	 * @throws AssertionError if the path is not valid or does not result in a map
 	 */
 	@SuppressWarnings("unchecked")
-	public AbstractMapAssert<?, ?, Object, Object> extractingJsonPathMapValue(
-			CharSequence expression, Object... args) {
+	public <K, V> MapAssert<K, V> extractingJsonPathMapValue(CharSequence expression,
+			Object... args) {
 		return Assertions.assertThat(
 				extractingJsonPathValue(expression, args, Map.class, "a map"));
 	}
@@ -989,7 +991,7 @@ public class JsonContentAssert extends AbstractAssert<JsonContentAssert, CharSeq
 		}
 		try {
 			return JSONCompare.compareJSON(
-					(expectedJson == null ? null : expectedJson.toString()),
+					(expectedJson != null) ? expectedJson.toString() : null,
 					this.actual.toString(), compareMode);
 		}
 		catch (Exception ex) {
@@ -1007,7 +1009,7 @@ public class JsonContentAssert extends AbstractAssert<JsonContentAssert, CharSeq
 		}
 		try {
 			return JSONCompare.compareJSON(
-					(expectedJson == null ? null : expectedJson.toString()),
+					(expectedJson != null) ? expectedJson.toString() : null,
 					this.actual.toString(), comparator);
 		}
 		catch (Exception ex) {
@@ -1052,7 +1054,7 @@ public class JsonContentAssert extends AbstractAssert<JsonContentAssert, CharSeq
 
 		JsonPathValue(CharSequence expression, Object... args) {
 			org.springframework.util.Assert.hasText(
-					(expression == null ? null : expression.toString()),
+					(expression != null) ? expression.toString() : null,
 					"expression must not be null or empty");
 			this.expression = String.format(expression.toString(), args);
 			this.jsonPath = JsonPath.compile(this.expression);
@@ -1105,7 +1107,7 @@ public class JsonContentAssert extends AbstractAssert<JsonContentAssert, CharSeq
 		public Object getValue(boolean required) {
 			try {
 				CharSequence json = JsonContentAssert.this.actual;
-				return this.jsonPath.read(json == null ? null : json.toString());
+				return this.jsonPath.read((json != null) ? json.toString() : null);
 			}
 			catch (Exception ex) {
 				if (!required) {

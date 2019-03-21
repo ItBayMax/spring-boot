@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -231,7 +231,7 @@ public class HealthIndicatorAutoConfiguration {
 		private String getValidationQuery(DataSource source) {
 			DataSourcePoolMetadata poolMetadata = this.poolMetadataProvider
 					.getDataSourcePoolMetadata(source);
-			return (poolMetadata == null ? null : poolMetadata.getValidationQuery());
+			return (poolMetadata != null) ? poolMetadata.getValidationQuery() : null;
 		}
 
 	}
@@ -281,6 +281,7 @@ public class HealthIndicatorAutoConfiguration {
 	}
 
 	@Configuration
+	@ConditionalOnClass(RedisConnectionFactory.class)
 	@ConditionalOnBean(RedisConnectionFactory.class)
 	@ConditionalOnEnabledHealthIndicator("redis")
 	public static class RedisHealthIndicatorConfiguration extends
@@ -302,6 +303,7 @@ public class HealthIndicatorAutoConfiguration {
 	}
 
 	@Configuration
+	@ConditionalOnClass(RabbitTemplate.class)
 	@ConditionalOnBean(RabbitTemplate.class)
 	@ConditionalOnEnabledHealthIndicator("rabbit")
 	public static class RabbitHealthIndicatorConfiguration extends
@@ -323,6 +325,7 @@ public class HealthIndicatorAutoConfiguration {
 	}
 
 	@Configuration
+	@ConditionalOnClass(SolrClient.class)
 	@ConditionalOnBean(SolrClient.class)
 	@ConditionalOnEnabledHealthIndicator("solr")
 	public static class SolrHealthIndicatorConfiguration extends
@@ -361,6 +364,7 @@ public class HealthIndicatorAutoConfiguration {
 	}
 
 	@Configuration
+	@ConditionalOnClass(JavaMailSenderImpl.class)
 	@ConditionalOnBean(JavaMailSenderImpl.class)
 	@ConditionalOnEnabledHealthIndicator("mail")
 	public static class MailHealthIndicatorConfiguration extends
@@ -382,6 +386,7 @@ public class HealthIndicatorAutoConfiguration {
 	}
 
 	@Configuration
+	@ConditionalOnClass(ConnectionFactory.class)
 	@ConditionalOnBean(ConnectionFactory.class)
 	@ConditionalOnEnabledHealthIndicator("jms")
 	public static class JmsHealthIndicatorConfiguration extends

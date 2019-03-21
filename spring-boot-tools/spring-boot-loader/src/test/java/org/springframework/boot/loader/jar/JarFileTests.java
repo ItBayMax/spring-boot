@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -31,6 +31,7 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -92,6 +93,7 @@ public class JarFileTests {
 		assertThat(entries.nextElement().getName()).isEqualTo("special/\u00EB.dat");
 		assertThat(entries.nextElement().getName()).isEqualTo("nested.jar");
 		assertThat(entries.nextElement().getName()).isEqualTo("another-nested.jar");
+		assertThat(entries.nextElement().getName()).isEqualTo("space nested.jar");
 		assertThat(entries.hasMoreElements()).isFalse();
 		URL jarUrl = new URL("jar:" + this.rootJarFile.toURI() + "!/");
 		URLClassLoader urlClassLoader = new URLClassLoader(new URL[] { jarUrl });
@@ -134,6 +136,7 @@ public class JarFileTests {
 		assertThat(entries.nextElement().getName()).isEqualTo("special/\u00EB.dat");
 		assertThat(entries.nextElement().getName()).isEqualTo("nested.jar");
 		assertThat(entries.nextElement().getName()).isEqualTo("another-nested.jar");
+		assertThat(entries.nextElement().getName()).isEqualTo("space nested.jar");
 		assertThat(entries.hasMoreElements()).isFalse();
 	}
 
@@ -169,7 +172,13 @@ public class JarFileTests {
 
 	@Test
 	public void getSize() throws Exception {
-		assertThat(this.jarFile.size()).isEqualTo((int) this.rootJarFile.length());
+		ZipFile zip = new ZipFile(this.rootJarFile);
+		try {
+			assertThat(this.jarFile.size()).isEqualTo(zip.size());
+		}
+		finally {
+			zip.close();
+		}
 	}
 
 	@Test
@@ -476,6 +485,26 @@ public class JarFileTests {
 		JarFile jf = new JarFile(temp);
 		jf.close();
 		assertThat(temp.delete()).isTrue();
+	}
+
+	@Test
+	public void createUrlFromStringWithContextWhenNotFound() throws Exception {
+		// gh-12483
+		JarURLConnection.setUseFastExceptions(true);
+		try {
+			JarFile.registerUrlProtocolHandler();
+			JarFile nested = this.jarFile
+					.getNestedJarFile(this.jarFile.getEntry("nested.jar"));
+			URL context = nested.getUrl();
+			new URL(context, "jar:" + this.rootJarFile.toURI() + "!/nested.jar!/3.dat")
+					.openConnection().getInputStream().close();
+			this.thrown.expect(FileNotFoundException.class);
+			new URL(context, "jar:" + this.rootJarFile.toURI() + "!/no.dat")
+					.openConnection().getInputStream().close();
+		}
+		finally {
+			JarURLConnection.setUseFastExceptions(false);
+		}
 	}
 
 }

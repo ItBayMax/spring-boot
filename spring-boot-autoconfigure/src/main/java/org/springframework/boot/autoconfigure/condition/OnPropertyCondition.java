@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2016 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -108,7 +108,7 @@ class OnPropertyCondition extends SpringBootCondition {
 					ConditionMessage.forCondition(ConditionalOnProperty.class, spec)
 							.found("different value in property",
 									"different value in properties")
-					.items(Style.QUOTE, nonMatchingProperties));
+							.items(Style.QUOTE, nonMatchingProperties));
 		}
 		return ConditionOutcome.match(ConditionMessage
 				.forCondition(ConditionalOnProperty.class, spec).because("matched"));
@@ -145,7 +145,7 @@ class OnPropertyCondition extends SpringBootCondition {
 					"The name or value attribute of @ConditionalOnProperty must be specified");
 			Assert.state(value.length == 0 || name.length == 0,
 					"The name and value attributes of @ConditionalOnProperty are exclusive");
-			return (value.length > 0 ? value : name);
+			return (value.length > 0) ? value : name;
 		}
 
 		private void collectProperties(PropertyResolver resolver, List<String> missing,

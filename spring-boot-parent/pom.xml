@@ -1,20 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-dependencies</artifactId>
-		<version>1.5.5.BUILD-SNAPSHOT</version>
+		<version>1.5.20.BUILD-SNAPSHOT</version>
 		<relativePath>../spring-boot-dependencies</relativePath>
 	</parent>
 	<artifactId>spring-boot-parent</artifactId>
 	<packaging>pom</packaging>
 	<name>Spring Boot Parent</name>
 	<description>Spring Boot Parent</description>
-	<url>http://projects.spring.io/spring-boot/</url>
+	<url>https://projects.spring.io/spring-boot/</url>
 	<organization>
 		<name>Pivotal Software, Inc.</name>
-		<url>http://www.spring.io</url>
+		<url>https://www.spring.io</url>
 	</organization>
 	<properties>
 		<main.basedir>..</main.basedir>
@@ -24,9 +24,10 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<maven.version>3.1.1</maven.version>
+		<spring-javaformat.version>0.0.7</spring-javaformat.version>
 	</properties>
 	<scm>
-		<url>http://github.com/spring-projects/spring-boot</url>
+		<url>https://github.com/spring-projects/spring-boot</url>
 		<connection>scm:git:git://github.com/spring-projects/spring-boot.git</connection>
 		<developerConnection>scm:git:ssh://git@github.com/spring-projects/spring-boot.git</developerConnection>
 	</scm>
@@ -43,7 +44,7 @@
 			<dependency>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-test-support</artifactId>
-				<version>1.5.5.BUILD-SNAPSHOT</version>
+				<version>1.5.20.BUILD-SNAPSHOT</version>
 			</dependency>
 
 			<!-- Additional Dependencies the consumers of spring-boot-dependencies
@@ -52,6 +53,11 @@
 				<groupId>log4j</groupId>
 				<artifactId>log4j</artifactId>
 				<version>1.2.17</version>
+			</dependency>
+			<dependency>
+				<groupId>commons-fileupload</groupId>
+				<artifactId>commons-fileupload</artifactId>
+				<version>1.3.3</version>
 			</dependency>
 			<dependency>
 				<groupId>com.google.guava</groupId>
@@ -81,7 +87,7 @@
 			<dependency>
 				<groupId>io.spring.gradle</groupId>
 				<artifactId>dependency-management-plugin</artifactId>
-				<version>1.0.3.RELEASE</version>
+				<version>1.0.6.RELEASE</version>
 			</dependency>
 			<dependency>
 				<groupId>jline</groupId>
@@ -171,7 +177,7 @@
 			<dependency>
 				<groupId>org.codehaus.plexus</groupId>
 				<artifactId>plexus-utils</artifactId>
-				<version>3.0.20</version>
+				<version>3.0.24</version>
 			</dependency>
 			<dependency>
 				<groupId>org.eclipse.aether</groupId>
@@ -300,12 +306,17 @@
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-checkstyle-plugin</artifactId>
-					<version>2.17</version>
+					<version>3.0.0</version>
 					<dependencies>
 						<dependency>
 							<groupId>com.puppycrawl.tools</groupId>
 							<artifactId>checkstyle</artifactId>
-							<version>7.1.1</version>
+							<version>8.18</version>
+						</dependency>
+						<dependency>
+							<groupId>io.spring.javaformat</groupId>
+							<artifactId>spring-javaformat-checkstyle</artifactId>
+							<version>${spring-javaformat.version}</version>
 						</dependency>
 					</dependencies>
 				</plugin>
@@ -340,7 +351,7 @@
 				<plugin>
 					<groupId>org.codehaus.mojo</groupId>
 					<artifactId>animal-sniffer-maven-plugin</artifactId>
-					<version>1.15</version>
+					<version>1.16</version>
 				</plugin>
 				<plugin>
 					<groupId>org.codehaus.cargo</groupId>
@@ -495,6 +506,22 @@
 		</pluginManagement>
 		<plugins>
 			<plugin>
+				<groupId>io.spring.javaformat</groupId>
+				<artifactId>spring-javaformat-maven-plugin</artifactId>
+				<version>${spring-javaformat.version}</version>
+				<executions>
+					<execution>
+						<phase>validate</phase>
+						<configuration>
+							<skip>${disable.checks}</skip>
+						</configuration>
+						<goals>
+							<goal>validate</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-checkstyle-plugin</artifactId>
 				<executions>
@@ -505,11 +532,6 @@
 							<skip>${disable.checks}</skip>
 							<configLocation>src/checkstyle/checkstyle.xml</configLocation>
 							<suppressionsLocation>src/checkstyle/checkstyle-suppressions.xml</suppressionsLocation>
-							<headerLocation>src/checkstyle/checkstyle-header.txt</headerLocation>
-							<propertyExpansion>checkstyle.build.directory=${project.build.directory}</propertyExpansion>
-							<encoding>UTF-8</encoding>
-							<consoleOutput>true</consoleOutput>
-							<failOnViolation>true</failOnViolation>
 							<includeTestSourceDirectory>true</includeTestSourceDirectory>
 						</configuration>
 						<goals>
@@ -524,23 +546,6 @@
 				<configuration>
 					<source>${java.version}</source>
 					<target>${java.version}</target>
-				</configuration>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-eclipse-plugin</artifactId>
-				<configuration>
-					<useProjectReferences>false</useProjectReferences>
-					<additionalConfig>
-						<file>
-							<name>.settings/org.eclipse.jdt.ui.prefs</name>
-							<location>${main.basedir}/eclipse/org.eclipse.jdt.ui.prefs</location>
-						</file>
-						<file>
-							<name>.settings/org.eclipse.jdt.core.prefs</name>
-							<location>${main.basedir}/eclipse/org.eclipse.jdt.core.prefs</location>
-						</file>
-					</additionalConfig>
 				</configuration>
 			</plugin>
 			<plugin>
@@ -664,7 +669,7 @@
 			<repositories>
 				<repository>
 					<id>spring-ext</id>
-					<url>http://repo.spring.io/ext-release-local/</url>
+					<url>https://repo.spring.io/ext-release-local/</url>
 					<releases>
 						<enabled>true</enabled>
 					</releases>
@@ -675,7 +680,7 @@
 				<repository>
 					<id>spring-milestones</id>
 					<name>Spring Milestones</name>
-					<url>http://repo.spring.io/milestone</url>
+					<url>https://repo.spring.io/milestone</url>
 					<snapshots>
 						<enabled>false</enabled>
 					</snapshots>
@@ -683,7 +688,7 @@
 				<repository>
 					<id>spring-snapshots</id>
 					<name>Spring Snapshots</name>
-					<url>http://repo.spring.io/snapshot</url>
+					<url>https://repo.spring.io/snapshot</url>
 					<snapshots>
 						<enabled>true</enabled>
 					</snapshots>
@@ -693,7 +698,7 @@
 				<pluginRepository>
 					<id>spring-milestones</id>
 					<name>Spring Milestones</name>
-					<url>http://repo.spring.io/milestone</url>
+					<url>https://repo.spring.io/milestone</url>
 					<snapshots>
 						<enabled>false</enabled>
 					</snapshots>
@@ -701,7 +706,7 @@
 				<pluginRepository>
 					<id>spring-snapshots</id>
 					<name>Spring Snapshots</name>
-					<url>http://repo.spring.io/snapshot</url>
+					<url>https://repo.spring.io/snapshot</url>
 					<snapshots>
 						<enabled>true</enabled>
 					</snapshots>
@@ -721,7 +726,7 @@
 			<repositories>
 				<repository>
 					<id>spring-ext</id>
-					<url>http://repo.spring.io/ext-release-local/</url>
+					<url>https://repo.spring.io/ext-release-local/</url>
 					<releases>
 						<enabled>true</enabled>
 					</releases>
@@ -732,7 +737,7 @@
 				<repository>
 					<id>spring-milestones</id>
 					<name>Spring Milestones</name>
-					<url>http://repo.spring.io/milestone</url>
+					<url>https://repo.spring.io/milestone</url>
 					<snapshots>
 						<enabled>false</enabled>
 					</snapshots>
@@ -740,7 +745,7 @@
 				<repository>
 					<id>spring-snapshots</id>
 					<name>Spring Snapshots</name>
-					<url>http://repo.spring.io/snapshot</url>
+					<url>https://repo.spring.io/snapshot</url>
 					<snapshots>
 						<enabled>true</enabled>
 					</snapshots>
@@ -750,7 +755,7 @@
 				<pluginRepository>
 					<id>spring-milestones</id>
 					<name>Spring Milestones</name>
-					<url>http://repo.spring.io/milestone</url>
+					<url>https://repo.spring.io/milestone</url>
 					<snapshots>
 						<enabled>false</enabled>
 					</snapshots>
@@ -758,7 +763,7 @@
 				<pluginRepository>
 					<id>spring-snapshots</id>
 					<name>Spring Snapshots</name>
-					<url>http://repo.spring.io/snapshot</url>
+					<url>https://repo.spring.io/snapshot</url>
 					<snapshots>
 						<enabled>true</enabled>
 					</snapshots>
@@ -797,7 +802,7 @@
 			<repositories>
 				<repository>
 					<id>spring-ext</id>
-					<url>http://repo.spring.io/ext-release-local/</url>
+					<url>https://repo.spring.io/ext-release-local/</url>
 					<releases>
 						<enabled>true</enabled>
 					</releases>
@@ -808,7 +813,7 @@
 				<repository>
 					<id>spring-milestones</id>
 					<name>Spring Milestones</name>
-					<url>http://repo.spring.io/milestone</url>
+					<url>https://repo.spring.io/milestone</url>
 					<snapshots>
 						<enabled>false</enabled>
 					</snapshots>
@@ -816,7 +821,7 @@
 				<repository>
 					<id>spring-snapshots</id>
 					<name>Spring Snapshots</name>
-					<url>http://repo.spring.io/snapshot</url>
+					<url>https://repo.spring.io/snapshot</url>
 					<snapshots>
 						<enabled>true</enabled>
 					</snapshots>
@@ -826,7 +831,7 @@
 				<pluginRepository>
 					<id>spring-milestones</id>
 					<name>Spring Milestones</name>
-					<url>http://repo.spring.io/milestone</url>
+					<url>https://repo.spring.io/milestone</url>
 					<snapshots>
 						<enabled>false</enabled>
 					</snapshots>
@@ -834,7 +839,7 @@
 				<pluginRepository>
 					<id>spring-snapshots</id>
 					<name>Spring Snapshots</name>
-					<url>http://repo.spring.io/snapshot</url>
+					<url>https://repo.spring.io/snapshot</url>
 					<snapshots>
 						<enabled>true</enabled>
 					</snapshots>
@@ -846,7 +851,7 @@
 			<repositories>
 				<repository>
 					<id>spring-ext</id>
-					<url>http://repo.spring.io/ext-release-local/</url>
+					<url>https://repo.spring.io/ext-release-local/</url>
 					<releases>
 						<enabled>true</enabled>
 					</releases>
@@ -878,11 +883,19 @@
 			</build>
 			<pluginRepositories>
 				<pluginRepository>
-					<id>objectstyle</id>
-					<name>ObjectStyle.org Repository</name>
-					<url>http://objectstyle.org/maven2/</url>
+					<id>spring-milestones</id>
+					<name>Spring Milestones</name>
+					<url>https://repo.spring.io/milestone</url>
 					<snapshots>
 						<enabled>false</enabled>
+					</snapshots>
+				</pluginRepository>
+				<pluginRepository>
+					<id>spring-snapshots</id>
+					<name>Spring Snapshots</name>
+					<url>https://repo.spring.io/snapshot</url>
+					<snapshots>
+						<enabled>true</enabled>
 					</snapshots>
 				</pluginRepository>
 			</pluginRepositories>

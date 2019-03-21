@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -22,14 +22,14 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
 
+import org.springframework.boot.configurationprocessor.json.JSONArray;
+import org.springframework.boot.configurationprocessor.json.JSONObject;
 import org.springframework.boot.configurationprocessor.metadata.ConfigurationMetadata;
 import org.springframework.boot.configurationprocessor.metadata.ItemDeprecation;
 import org.springframework.boot.configurationprocessor.metadata.ItemHint;
@@ -38,6 +38,10 @@ import org.springframework.boot.configurationprocessor.metadata.TestJsonConverte
 import org.springframework.boot.configurationsample.incremental.BarProperties;
 import org.springframework.boot.configurationsample.incremental.FooProperties;
 import org.springframework.boot.configurationsample.incremental.RenamedBarProperties;
+import org.springframework.boot.configurationsample.lombok.LombokAccessLevelOverwriteDataProperties;
+import org.springframework.boot.configurationsample.lombok.LombokAccessLevelOverwriteDefaultProperties;
+import org.springframework.boot.configurationsample.lombok.LombokAccessLevelOverwriteExplicitProperties;
+import org.springframework.boot.configurationsample.lombok.LombokAccessLevelProperties;
 import org.springframework.boot.configurationsample.lombok.LombokExplicitProperties;
 import org.springframework.boot.configurationsample.lombok.LombokInnerClassProperties;
 import org.springframework.boot.configurationsample.lombok.LombokInnerClassWithGetterProperties;
@@ -51,8 +55,10 @@ import org.springframework.boot.configurationsample.method.MethodAndClassConfig;
 import org.springframework.boot.configurationsample.method.SimpleMethodConfig;
 import org.springframework.boot.configurationsample.simple.ClassWithNestedProperties;
 import org.springframework.boot.configurationsample.simple.DeprecatedSingleProperty;
+import org.springframework.boot.configurationsample.simple.DescriptionProperties;
 import org.springframework.boot.configurationsample.simple.HierarchicalProperties;
 import org.springframework.boot.configurationsample.simple.NotAnnotated;
+import org.springframework.boot.configurationsample.simple.SimpleArrayProperties;
 import org.springframework.boot.configurationsample.simple.SimpleCollectionProperties;
 import org.springframework.boot.configurationsample.simple.SimplePrefixValueProperties;
 import org.springframework.boot.configurationsample.simple.SimpleProperties;
@@ -69,6 +75,7 @@ import org.springframework.boot.configurationsample.specific.InnerClassRootConfi
 import org.springframework.boot.configurationsample.specific.InvalidAccessorProperties;
 import org.springframework.boot.configurationsample.specific.InvalidDoubleRegistrationProperties;
 import org.springframework.boot.configurationsample.specific.SimplePojo;
+import org.springframework.boot.configurationsample.specific.WildcardConfig;
 import org.springframework.boot.junit.compiler.TestCompiler;
 import org.springframework.util.FileCopyUtils;
 
@@ -81,6 +88,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Phillip Webb
  * @author Andy Wilkinson
  * @author Kris De Volder
+ * @author Jonas Keßler
  */
 public class ConfigurationMetadataAnnotationProcessorTests {
 
@@ -186,6 +194,20 @@ public class ConfigurationMetadataAnnotationProcessorTests {
 	}
 
 	@Test
+	public void descriptionProperties() {
+		ConfigurationMetadata metadata = compile(DescriptionProperties.class);
+		assertThat(metadata).has(Metadata.withGroup("description")
+				.fromSource(DescriptionProperties.class));
+		assertThat(metadata).has(Metadata.withProperty("description.simple", String.class)
+				.fromSource(DescriptionProperties.class)
+				.withDescription("A simple description."));
+		assertThat(metadata).has(Metadata
+				.withProperty("description.multi-line", String.class)
+				.fromSource(DescriptionProperties.class).withDescription(
+						"This is a lengthy description that spans across multiple lines to showcase that the line separators are cleaned automatically."));
+	}
+
+	@Test
 	@SuppressWarnings("deprecation")
 	public void deprecatedProperties() throws Exception {
 		Class<?> type = org.springframework.boot.configurationsample.simple.DeprecatedProperties.class;
@@ -252,6 +274,24 @@ public class ConfigurationMetadataAnnotationProcessorTests {
 				"java.util.Collection<java.lang.Byte>"));
 		assertThat(metadata).has(Metadata.withProperty("collection.doubles",
 				"java.util.List<java.lang.Double>"));
+		assertThat(metadata).has(Metadata.withProperty("collection.names-to-holders",
+				"java.util.Map<java.lang.String,org.springframework.boot.configurationsample.simple.SimpleCollectionProperties.Holder<java.lang.String>>"));
+	}
+
+	@Test
+	public void parseArrayConfig() throws Exception {
+		ConfigurationMetadata metadata = compile(SimpleArrayProperties.class);
+		assertThat(metadata)
+				.has(Metadata.withGroup("array").ofType(SimpleArrayProperties.class));
+		assertThat(metadata)
+				.has(Metadata.withProperty("array.primitive", "java.lang.Integer[]"));
+		assertThat(metadata)
+				.has(Metadata.withProperty("array.simple", "java.lang.String[]"));
+		assertThat(metadata).has(Metadata.withProperty("array.inner",
+				"org.springframework.boot.configurationsample.simple.SimpleArrayProperties$Holder[]"));
+		assertThat(metadata).has(Metadata.withProperty("array.name-to-integer",
+				"java.util.Map<java.lang.String,java.lang.Integer>[]"));
+		assertThat(metadata.getItems()).hasSize(5);
 	}
 
 	@Test
@@ -360,18 +400,14 @@ public class ConfigurationMetadataAnnotationProcessorTests {
 		ConfigurationMetadata metadata = compile(ClassWithNestedProperties.class);
 		assertThat(metadata).has(Metadata.withGroup("nestedChildProps")
 				.fromSource(ClassWithNestedProperties.NestedChildClass.class));
-		assertThat(metadata)
-				.has(Metadata
-						.withProperty("nestedChildProps.child-class-property",
-								Integer.class)
-						.fromSource(ClassWithNestedProperties.NestedChildClass.class)
-						.withDefaultValue(20));
-		assertThat(metadata)
-				.has(Metadata
-						.withProperty("nestedChildProps.parent-class-property",
-								Integer.class)
-						.fromSource(ClassWithNestedProperties.NestedChildClass.class)
-						.withDefaultValue(10));
+		assertThat(metadata).has(Metadata
+				.withProperty("nestedChildProps.child-class-property", Integer.class)
+				.fromSource(ClassWithNestedProperties.NestedChildClass.class)
+				.withDefaultValue(20));
+		assertThat(metadata).has(Metadata
+				.withProperty("nestedChildProps.parent-class-property", Integer.class)
+				.fromSource(ClassWithNestedProperties.NestedChildClass.class)
+				.withDefaultValue(10));
 	}
 
 	@Test
@@ -442,6 +478,20 @@ public class ConfigurationMetadataAnnotationProcessorTests {
 	}
 
 	@Test
+	public void wildcardTypes() throws IOException {
+		ConfigurationMetadata metadata = compile(WildcardConfig.class);
+		assertThat(metadata)
+				.has(Metadata.withGroup("wildcard").ofType(WildcardConfig.class));
+		assertThat(metadata).has(Metadata.withProperty("wildcard.string-to-number")
+				.ofType("java.util.Map<java.lang.String,? extends java.lang.Number>")
+				.fromSource(WildcardConfig.class));
+		assertThat(metadata).has(Metadata.withProperty("wildcard.integers")
+				.ofType("java.util.List<? super java.lang.Integer>")
+				.fromSource(WildcardConfig.class));
+		assertThat(metadata.getItems()).hasSize(3);
+	}
+
+	@Test
 	public void lombokDataProperties() throws Exception {
 		ConfigurationMetadata metadata = compile(LombokSimpleDataProperties.class);
 		assertSimpleLombokProperties(metadata, LombokSimpleDataProperties.class, "data");
@@ -458,6 +508,41 @@ public class ConfigurationMetadataAnnotationProcessorTests {
 		ConfigurationMetadata metadata = compile(LombokExplicitProperties.class);
 		assertSimpleLombokProperties(metadata, LombokExplicitProperties.class,
 				"explicit");
+		assertThat(metadata.getItems()).hasSize(6);
+	}
+
+	@Test
+	public void lombokAccessLevelProperties() {
+		ConfigurationMetadata metadata = compile(LombokAccessLevelProperties.class);
+		assertAccessLevelLombokProperties(metadata, LombokAccessLevelProperties.class,
+				"accesslevel", 2);
+	}
+
+	@Test
+	public void lombokAccessLevelOverwriteDataProperties() {
+		ConfigurationMetadata metadata = compile(
+				LombokAccessLevelOverwriteDataProperties.class);
+		assertAccessLevelOverwriteLombokProperties(metadata,
+				LombokAccessLevelOverwriteDataProperties.class,
+				"accesslevel.overwrite.data");
+	}
+
+	@Test
+	public void lombokAccessLevelOverwriteExplicitProperties() {
+		ConfigurationMetadata metadata = compile(
+				LombokAccessLevelOverwriteExplicitProperties.class);
+		assertAccessLevelOverwriteLombokProperties(metadata,
+				LombokAccessLevelOverwriteExplicitProperties.class,
+				"accesslevel.overwrite.explicit");
+	}
+
+	@Test
+	public void lombokAccessLevelOverwriteDefaultProperties() {
+		ConfigurationMetadata metadata = compile(
+				LombokAccessLevelOverwriteDefaultProperties.class);
+		assertAccessLevelOverwriteLombokProperties(metadata,
+				LombokAccessLevelOverwriteDefaultProperties.class,
+				"accesslevel.overwrite.default");
 	}
 
 	@Test
@@ -511,6 +596,17 @@ public class ConfigurationMetadataAnnotationProcessorTests {
 		assertThat(metadata).has(Metadata.withProperty("simple.comparator"));
 		assertThat(metadata).has(Metadata.withProperty("foo", String.class)
 				.fromSource(AdditionalMetadata.class));
+	}
+
+	@Test
+	public void mergingOfAdditionalPropertyMatchingGroup() throws Exception {
+		ItemMetadata property = ItemMetadata.newProperty(null, "simple",
+				"java.lang.String", null, null, null, null, null);
+		writeAdditionalMetadata(property);
+		ConfigurationMetadata metadata = compile(SimpleProperties.class);
+		assertThat(metadata)
+				.has(Metadata.withGroup("simple").fromSource(SimpleProperties.class));
+		assertThat(metadata).has(Metadata.withProperty("simple", String.class));
 	}
 
 	@Test
@@ -748,7 +844,22 @@ public class ConfigurationMetadataAnnotationProcessorTests {
 		assertThat(metadata).doesNotHave(Metadata.withProperty(prefix + ".ignored"));
 	}
 
-	private ConfigurationMetadata compile(Class<?>... types) throws IOException {
+	private void assertAccessLevelOverwriteLombokProperties(
+			ConfigurationMetadata metadata, Class<?> source, String prefix) {
+		assertAccessLevelLombokProperties(metadata, source, prefix, 7);
+	}
+
+	private void assertAccessLevelLombokProperties(ConfigurationMetadata metadata,
+			Class<?> source, String prefix, int countNameFields) {
+		assertThat(metadata).has(Metadata.withGroup(prefix).fromSource(source));
+		for (int i = 0; i < countNameFields; i++) {
+			assertThat(metadata)
+					.has(Metadata.withProperty(prefix + ".name" + i, String.class));
+		}
+		assertThat(metadata.getItems()).hasSize(1 + countNameFields);
+	}
+
+	private ConfigurationMetadata compile(Class<?>... types) {
 		TestConfigurationMetadataAnnotationProcessor processor = new TestConfigurationMetadataAnnotationProcessor(
 				this.compiler.getOutputLocation());
 		this.compiler.getTask(types).call(processor);

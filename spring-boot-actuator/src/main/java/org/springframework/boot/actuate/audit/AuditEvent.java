@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -56,9 +56,9 @@ public class AuditEvent implements Serializable {
 
 	/**
 	 * Create a new audit event for the current time.
-	 * @param principal The user principal responsible
+	 * @param principal the user principal responsible
 	 * @param type the event type
-	 * @param data The event data
+	 * @param data the event data
 	 */
 	public AuditEvent(String principal, String type, Map<String, Object> data) {
 		this(new Date(), principal, type, data);
@@ -67,9 +67,9 @@ public class AuditEvent implements Serializable {
 	/**
 	 * Create a new audit event for the current time from data provided as name-value
 	 * pairs.
-	 * @param principal The user principal responsible
+	 * @param principal the user principal responsible
 	 * @param type the event type
-	 * @param data The event data in the form 'key=value' or simply 'key'
+	 * @param data the event data in the form 'key=value' or simply 'key'
 	 */
 	public AuditEvent(String principal, String type, String... data) {
 		this(new Date(), principal, type, convert(data));
@@ -77,18 +77,17 @@ public class AuditEvent implements Serializable {
 
 	/**
 	 * Create a new audit event.
-	 * @param timestamp The date/time of the event
-	 * @param principal The user principal responsible
+	 * @param timestamp the date/time of the event
+	 * @param principal the user principal responsible
 	 * @param type the event type
-	 * @param data The event data
+	 * @param data the event data
 	 */
 	public AuditEvent(Date timestamp, String principal, String type,
 			Map<String, Object> data) {
 		Assert.notNull(timestamp, "Timestamp must not be null");
-		Assert.notNull(principal, "Principal must not be null");
 		Assert.notNull(type, "Type must not be null");
 		this.timestamp = timestamp;
-		this.principal = principal;
+		this.principal = (principal != null) ? principal : "";
 		this.type = type;
 		this.data = Collections.unmodifiableMap(data);
 	}
@@ -117,7 +116,8 @@ public class AuditEvent implements Serializable {
 	}
 
 	/**
-	 * Returns the user principal responsible for the event.
+	 * Returns the user principal responsible for the event or an empty String if the
+	 * principal is not available.
 	 * @return the principal
 	 */
 	public String getPrincipal() {

@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -27,6 +27,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
+import java.util.regex.Pattern;
 
 import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
 import org.eclipse.aether.DefaultRepositorySystemSession;
@@ -63,6 +64,9 @@ import org.springframework.util.StringUtils;
  * @author Andy Wilkinson
  */
 public class ModifiedClassPathRunner extends BlockJUnit4ClassRunner {
+
+	private static final Pattern INTELLIJ_CLASSPATH_JAR_PATTERN = Pattern
+			.compile(".*classpath(\\d+)?.jar");
 
 	public ModifiedClassPathRunner(Class<?> testClass) throws InitializationError {
 		super(testClass);
@@ -102,7 +106,7 @@ public class ModifiedClassPathRunner extends BlockJUnit4ClassRunner {
 	private URL[] extractUrls(URLClassLoader classLoader) throws Exception {
 		List<URL> extractedUrls = new ArrayList<URL>();
 		for (URL url : classLoader.getURLs()) {
-			if (isSurefireBooterJar(url)) {
+			if (isManifestOnlyJar(url)) {
 				extractedUrls.addAll(extractUrlsFromManifestClassPath(url));
 			}
 			else {
@@ -112,8 +116,28 @@ public class ModifiedClassPathRunner extends BlockJUnit4ClassRunner {
 		return extractedUrls.toArray(new URL[extractedUrls.size()]);
 	}
 
+	private boolean isManifestOnlyJar(URL url) {
+		return isSurefireBooterJar(url) || isShortenedIntelliJJar(url);
+	}
+
 	private boolean isSurefireBooterJar(URL url) {
 		return url.getPath().contains("surefirebooter");
+	}
+
+	private boolean isShortenedIntelliJJar(URL url) {
+		String urlPath = url.getPath();
+		boolean isCandidate = INTELLIJ_CLASSPATH_JAR_PATTERN.matcher(urlPath).matches();
+		if (isCandidate) {
+			try {
+				Attributes attributes = getManifestMainAttributesFromUrl(url);
+				String createdBy = attributes.getValue("Created-By");
+				return createdBy != null && createdBy.contains("IntelliJ");
+			}
+			catch (Exception ex) {
+				return false;
+			}
+		}
+		return false;
 	}
 
 	private List<URL> extractUrlsFromManifestClassPath(URL booterJar) throws Exception {
@@ -125,10 +149,15 @@ public class ModifiedClassPathRunner extends BlockJUnit4ClassRunner {
 	}
 
 	private String[] getClassPath(URL booterJar) throws Exception {
-		JarFile jarFile = new JarFile(new File(booterJar.toURI()));
+		Attributes attributes = getManifestMainAttributesFromUrl(booterJar);
+		return StringUtils.delimitedListToStringArray(
+				attributes.getValue(Attributes.Name.CLASS_PATH), " ");
+	}
+
+	private Attributes getManifestMainAttributesFromUrl(URL url) throws Exception {
+		JarFile jarFile = new JarFile(new File(url.toURI()));
 		try {
-			return StringUtils.delimitedListToStringArray(jarFile.getManifest()
-					.getMainAttributes().getValue(Attributes.Name.CLASS_PATH), " ");
+			return jarFile.getManifest().getMainAttributes();
 		}
 		finally {
 			jarFile.close();
@@ -171,7 +200,7 @@ public class ModifiedClassPathRunner extends BlockJUnit4ClassRunner {
 				repositorySystem.newLocalRepositoryManager(session, localRepository));
 		CollectRequest collectRequest = new CollectRequest(null,
 				Arrays.asList(new RemoteRepository.Builder("central", "default",
-						"http://central.maven.org/maven2").build()));
+						"https://repo.maven.apache.org/maven2").build()));
 
 		collectRequest.setDependencies(createDependencies(coordinates));
 		DependencyRequest dependencyRequest = new DependencyRequest(collectRequest, null);
@@ -204,8 +233,8 @@ public class ModifiedClassPathRunner extends BlockJUnit4ClassRunner {
 		private ClassPathEntryFilter(Class<?> testClass) throws Exception {
 			ClassPathExclusions exclusions = AnnotationUtils.findAnnotation(testClass,
 					ClassPathExclusions.class);
-			this.exclusions = exclusions == null ? Collections.<String>emptyList()
-					: Arrays.asList(exclusions.value());
+			this.exclusions = (exclusions != null) ? Arrays.asList(exclusions.value())
+					: Collections.<String>emptyList();
 		}
 
 		private boolean isExcluded(URL url) throws Exception {

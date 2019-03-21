@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -40,6 +40,10 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.ProtocolResolver;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.mock.env.MockEnvironment;
 import org.springframework.test.context.support.TestPropertySourceUtils;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -52,6 +56,12 @@ import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 /**
  * Tests for {@link ConfigurationPropertiesBindingPostProcessor}.
@@ -366,6 +376,38 @@ public class ConfigurationPropertiesBindingPostProcessorTests {
 		}
 	}
 
+	@Test
+	public void customProtocolResolverIsInvoked() {
+		this.context = new AnnotationConfigApplicationContext();
+		TestPropertySourceUtils.addInlinedPropertiesToEnvironment(this.context,
+				"test.resource=application.properties");
+		ProtocolResolver protocolResolver = mock(ProtocolResolver.class);
+		given(protocolResolver.resolve(anyString(), any(ResourceLoader.class)))
+				.willReturn(null);
+		this.context.addProtocolResolver(protocolResolver);
+		this.context.register(PropertiesWithResource.class);
+		this.context.refresh();
+		verify(protocolResolver).resolve(eq("application.properties"),
+				any(ResourceLoader.class));
+	}
+
+	@Test
+	public void customProtocolResolver() {
+		this.context = new AnnotationConfigApplicationContext();
+		TestPropertySourceUtils.addInlinedPropertiesToEnvironment(this.context,
+				"test.resource=test:/application.properties");
+		this.context.addProtocolResolver(new TestProtocolResolver());
+		this.context.register(PropertiesWithResource.class);
+		this.context.refresh();
+		Resource resource = this.context.getBean(PropertiesWithResource.class)
+				.getResource();
+		assertThat(resource).isNotNull();
+		assertThat(resource).isInstanceOf(ClassPathResource.class);
+		assertThat(resource.exists()).isTrue();
+		assertThat(((ClassPathResource) resource).getPath())
+				.isEqualTo("application.properties");
+	}
+
 	@Configuration
 	@EnableConfigurationProperties
 	public static class TestConfigurationWithValidatingSetter {
@@ -512,6 +554,7 @@ public class ConfigurationPropertiesBindingPostProcessorTests {
 	interface ValidatedProperties {
 
 		String getFoo();
+
 	}
 
 	@ConfigurationProperties("test")
@@ -815,6 +858,38 @@ public class ConfigurationPropertiesBindingPostProcessorTests {
 
 		public void setName(String name) {
 			this.name = name;
+		}
+
+	}
+
+	@Configuration
+	@EnableConfigurationProperties
+	@ConfigurationProperties(prefix = "test")
+	public static class PropertiesWithResource {
+
+		private Resource resource;
+
+		public Resource getResource() {
+			return this.resource;
+		}
+
+		public void setResource(Resource resource) {
+			this.resource = resource;
+		}
+
+	}
+
+	private static class TestProtocolResolver implements ProtocolResolver {
+
+		public static final String PREFIX = "test:/";
+
+		@Override
+		public Resource resolve(String location, ResourceLoader resourceLoader) {
+			if (location.startsWith(PREFIX)) {
+				String path = location.substring(PREFIX.length(), location.length());
+				return new ClassPathResource(path);
+			}
+			return null;
 		}
 
 	}

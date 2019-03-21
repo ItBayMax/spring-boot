@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2015 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,6 +17,7 @@
 package org.springframework.boot.devtools.restart.classloader;
 
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -30,6 +31,7 @@ import org.apache.commons.logging.LogFactory;
 import org.springframework.boot.devtools.restart.classloader.ClassLoaderFile.Kind;
 import org.springframework.core.SmartClassLoader;
 import org.springframework.util.Assert;
+import org.springframework.util.ReflectionUtils;
 
 /**
  * Disposable {@link ClassLoader} used to support application restarting. Provides parent
@@ -40,6 +42,8 @@ import org.springframework.util.Assert;
  * @since 1.3.0
  */
 public class RestartClassLoader extends URLClassLoader implements SmartClassLoader {
+
+	private final ClassLoadingLockSupplier classLoadingLockSupplier;
 
 	private final Log logger;
 
@@ -85,6 +89,11 @@ public class RestartClassLoader extends URLClassLoader implements SmartClassLoad
 		if (logger.isDebugEnabled()) {
 			logger.debug("Created RestartClassLoader " + toString());
 		}
+		Method classLoadingLockMethod = ReflectionUtils.findMethod(ClassLoader.class,
+				"getClassLoadingLock", String.class);
+		this.classLoadingLockSupplier = (classLoadingLockMethod != null)
+				? new StandardClassLoadingLockSupplier()
+				: new Java6ClassLoadingLockSupplier();
 	}
 
 	@Override
@@ -142,19 +151,21 @@ public class RestartClassLoader extends URLClassLoader implements SmartClassLoad
 		if (file != null && file.getKind() == Kind.DELETED) {
 			throw new ClassNotFoundException(name);
 		}
-		Class<?> loadedClass = findLoadedClass(name);
-		if (loadedClass == null) {
-			try {
-				loadedClass = findClass(name);
+		synchronized (this.classLoadingLockSupplier.getClassLoadingLock(this, name)) {
+			Class<?> loadedClass = findLoadedClass(name);
+			if (loadedClass == null) {
+				try {
+					loadedClass = findClass(name);
+				}
+				catch (ClassNotFoundException ex) {
+					loadedClass = getParent().loadClass(name);
+				}
 			}
-			catch (ClassNotFoundException ex) {
-				loadedClass = getParent().loadClass(name);
+			if (resolve) {
+				resolveClass(loadedClass);
 			}
+			return loadedClass;
 		}
-		if (resolve) {
-			resolveClass(loadedClass);
-		}
-		return loadedClass;
 	}
 
 	@Override
@@ -226,6 +237,34 @@ public class RestartClassLoader extends URLClassLoader implements SmartClassLoad
 			E element = this.firstElement;
 			this.firstElement = null;
 			return element;
+		}
+
+	}
+
+	private interface ClassLoadingLockSupplier {
+
+		Object getClassLoadingLock(RestartClassLoader classLoader, String className);
+
+	}
+
+	private static final class Java6ClassLoadingLockSupplier
+			implements ClassLoadingLockSupplier {
+
+		@Override
+		public Object getClassLoadingLock(RestartClassLoader classLoader,
+				String className) {
+			return classLoader;
+		}
+
+	}
+
+	private static final class StandardClassLoadingLockSupplier
+			implements ClassLoadingLockSupplier {
+
+		@Override
+		public Object getClassLoadingLock(RestartClassLoader classLoader,
+				String className) {
+			return classLoader.getClassLoadingLock(className);
 		}
 
 	}

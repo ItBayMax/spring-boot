@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -84,7 +84,8 @@ public class ConfigurationPropertiesBindingPostProcessor implements BeanPostProc
 	public static final String VALIDATOR_BEAN_NAME = "configurationPropertiesValidator";
 
 	private static final String[] VALIDATOR_CLASSES = { "javax.validation.Validator",
-			"javax.validation.ValidatorFactory" };
+			"javax.validation.ValidatorFactory",
+			"javax.validation.bootstrap.GenericBootstrap" };
 
 	private static final Log logger = LogFactory
 			.getLog(ConfigurationPropertiesBindingPostProcessor.class);
@@ -311,11 +312,12 @@ public class ConfigurationPropertiesBindingPostProcessor implements BeanPostProc
 		PropertiesConfigurationFactory<Object> factory = new PropertiesConfigurationFactory<Object>(
 				target);
 		factory.setPropertySources(this.propertySources);
+		factory.setApplicationContext(this.applicationContext);
 		factory.setValidator(determineValidator(bean));
 		// If no explicit conversion service is provided we add one so that (at least)
 		// comma-separated arrays of convertibles can be bound automatically
-		factory.setConversionService(this.conversionService == null
-				? getDefaultConversionService() : this.conversionService);
+		factory.setConversionService((this.conversionService != null)
+				? this.conversionService : getDefaultConversionService());
 		if (annotation != null) {
 			factory.setIgnoreInvalidFields(annotation.ignoreInvalidFields());
 			factory.setIgnoreUnknownFields(annotation.ignoreUnknownFields());

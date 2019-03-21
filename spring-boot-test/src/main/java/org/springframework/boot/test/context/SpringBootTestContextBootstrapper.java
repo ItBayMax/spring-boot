@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -147,8 +147,8 @@ public class SpringBootTestContextBootstrapper extends DefaultTestContextBootstr
 				WebAppConfiguration webAppConfiguration = AnnotatedElementUtils
 						.findMergedAnnotation(mergedConfig.getTestClass(),
 								WebAppConfiguration.class);
-				String resourceBasePath = (webAppConfiguration == null ? "src/main/webapp"
-						: webAppConfiguration.value());
+				String resourceBasePath = (webAppConfiguration != null)
+						? webAppConfiguration.value() : "src/main/webapp";
 				mergedConfig = new WebMergedContextConfiguration(mergedConfig,
 						resourceBasePath);
 			}
@@ -275,17 +275,17 @@ public class SpringBootTestContextBootstrapper extends DefaultTestContextBootstr
 	 */
 	protected WebEnvironment getWebEnvironment(Class<?> testClass) {
 		SpringBootTest annotation = getAnnotation(testClass);
-		return (annotation == null ? null : annotation.webEnvironment());
+		return (annotation != null) ? annotation.webEnvironment() : null;
 	}
 
 	protected Class<?>[] getClasses(Class<?> testClass) {
 		SpringBootTest annotation = getAnnotation(testClass);
-		return (annotation == null ? null : annotation.classes());
+		return (annotation != null) ? annotation.classes() : null;
 	}
 
 	protected String[] getProperties(Class<?> testClass) {
 		SpringBootTest annotation = getAnnotation(testClass);
-		return (annotation == null ? null : annotation.properties());
+		return (annotation != null) ? annotation.properties() : null;
 	}
 
 	protected SpringBootTest getAnnotation(Class<?> testClass) {

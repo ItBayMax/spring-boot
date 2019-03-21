@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2015 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -46,8 +46,8 @@ class ProjectGenerator {
 	public void generateProject(ProjectGenerationRequest request, boolean force)
 			throws IOException {
 		ProjectGenerationResponse response = this.initializrService.generate(request);
-		String fileName = (request.getOutput() != null ? request.getOutput()
-				: response.getFileName());
+		String fileName = (request.getOutput() != null) ? request.getOutput()
+				: response.getFileName();
 		if (shouldExtract(request, response)) {
 			if (isZipArchive(response)) {
 				extractProject(response, request.getOutput(), force);
@@ -101,8 +101,8 @@ class ProjectGenerator {
 
 	private void extractProject(ProjectGenerationResponse entity, String output,
 			boolean overwrite) throws IOException {
-		File outputFolder = (output != null ? new File(output)
-				: new File(System.getProperty("user.dir")));
+		File outputFolder = (output != null) ? new File(output)
+				: new File(System.getProperty("user.dir"));
 		if (!outputFolder.exists()) {
 			outputFolder.mkdirs();
 		}

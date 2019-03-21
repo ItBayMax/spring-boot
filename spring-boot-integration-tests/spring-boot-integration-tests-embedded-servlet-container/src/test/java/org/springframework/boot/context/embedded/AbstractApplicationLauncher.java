@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -66,8 +66,9 @@ abstract class AbstractApplicationLauncher extends ExternalResource {
 
 	private Process startApplication() throws Exception {
 		File workingDirectory = getWorkingDirectory();
-		File serverPortFile = workingDirectory == null ? new File("target/server.port")
-				: new File(workingDirectory, "target/server.port");
+		File serverPortFile = (workingDirectory != null)
+				? new File(workingDirectory, "target/server.port")
+				: new File("target/server.port");
 		serverPortFile.delete();
 		File archive = this.applicationBuilder.buildApplication();
 		List<String> arguments = new ArrayList<String>();

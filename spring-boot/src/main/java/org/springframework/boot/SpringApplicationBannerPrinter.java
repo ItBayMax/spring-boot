@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2016 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -56,7 +56,7 @@ class SpringApplicationBannerPrinter {
 	}
 
 	public Banner print(Environment environment, Class<?> sourceClass, Log logger) {
-		Banner banner = getBanner(environment, this.fallbackBanner);
+		Banner banner = getBanner(environment);
 		try {
 			logger.info(createStringFromBanner(banner, environment, sourceClass));
 		}
@@ -67,12 +67,12 @@ class SpringApplicationBannerPrinter {
 	}
 
 	public Banner print(Environment environment, Class<?> sourceClass, PrintStream out) {
-		Banner banner = getBanner(environment, this.fallbackBanner);
+		Banner banner = getBanner(environment);
 		banner.printBanner(environment, sourceClass, out);
 		return new PrintedBanner(banner, sourceClass);
 	}
 
-	private Banner getBanner(Environment environment, Banner definedBanner) {
+	private Banner getBanner(Environment environment) {
 		Banners banners = new Banners();
 		banners.addIfNotNull(getImageBanner(environment));
 		banners.addIfNotNull(getTextBanner(environment));
@@ -163,7 +163,7 @@ class SpringApplicationBannerPrinter {
 		@Override
 		public void printBanner(Environment environment, Class<?> sourceClass,
 				PrintStream out) {
-			sourceClass = (sourceClass == null ? this.sourceClass : sourceClass);
+			sourceClass = (sourceClass != null) ? sourceClass : this.sourceClass;
 			this.banner.printBanner(environment, sourceClass, out);
 		}
 

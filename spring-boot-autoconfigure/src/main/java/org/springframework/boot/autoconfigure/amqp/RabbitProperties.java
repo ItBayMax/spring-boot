@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -203,7 +203,7 @@ public class RabbitProperties {
 			return this.username;
 		}
 		Address address = this.parsedAddresses.get(0);
-		return address.username == null ? this.username : address.username;
+		return (address.username != null) ? address.username : this.username;
 	}
 
 	public void setUsername(String username) {
@@ -226,7 +226,7 @@ public class RabbitProperties {
 			return getPassword();
 		}
 		Address address = this.parsedAddresses.get(0);
-		return address.password == null ? getPassword() : address.password;
+		return (address.password != null) ? address.password : getPassword();
 	}
 
 	public void setPassword(String password) {
@@ -253,7 +253,7 @@ public class RabbitProperties {
 			return getVirtualHost();
 		}
 		Address address = this.parsedAddresses.get(0);
-		return address.virtualHost == null ? getVirtualHost() : address.virtualHost;
+		return (address.virtualHost != null) ? address.virtualHost : getVirtualHost();
 	}
 
 	public void setVirtualHost(String virtualHost) {
@@ -337,6 +337,17 @@ public class RabbitProperties {
 		 */
 		private String algorithm;
 
+		/**
+		 * Whether to enable server side certificate validation.
+		 */
+		private boolean validateServerCertificate = true;
+
+		/**
+		 * Whether to enable hostname verification. Requires AMQP client 4.8 or above and
+		 * defaults to true when a suitable client version is used.
+		 */
+		private Boolean verifyHostname;
+
 		public boolean isEnabled() {
 			return this.enabled;
 		}
@@ -383,6 +394,22 @@ public class RabbitProperties {
 
 		public void setAlgorithm(String sslAlgorithm) {
 			this.algorithm = sslAlgorithm;
+		}
+
+		public boolean isValidateServerCertificate() {
+			return this.validateServerCertificate;
+		}
+
+		public void setValidateServerCertificate(boolean validateServerCertificate) {
+			this.validateServerCertificate = validateServerCertificate;
+		}
+
+		public Boolean getVerifyHostname() {
+			return this.verifyHostname;
+		}
+
+		public void setVerifyHostname(Boolean verifyHostname) {
+			this.verifyHostname = verifyHostname;
 		}
 
 	}

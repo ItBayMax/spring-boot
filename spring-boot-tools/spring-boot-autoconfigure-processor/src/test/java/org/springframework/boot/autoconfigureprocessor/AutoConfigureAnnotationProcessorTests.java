@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -54,12 +54,12 @@ public class AutoConfigureAnnotationProcessorTests {
 	@Test
 	public void annotatedClass() throws Exception {
 		Properties properties = compile(TestClassConfiguration.class);
-		System.out.println(properties);
 		assertThat(properties).hasSize(3);
 		assertThat(properties).containsEntry(
 				"org.springframework.boot.autoconfigureprocessor."
 						+ "TestClassConfiguration.ConditionalOnClass",
-				"java.io.InputStream,java.io.OutputStream");
+				"java.io.InputStream,org.springframework.boot.autoconfigureprocessor."
+						+ "TestClassConfiguration$Nested");
 		assertThat(properties).containsKey(
 				"org.springframework.boot.autoconfigureprocessor.TestClassConfiguration");
 		assertThat(properties).containsKey(

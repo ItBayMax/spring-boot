@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2016 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -282,7 +282,7 @@ public final class MimeMappings implements Iterable<Mapping> {
 	 */
 	public String add(String extension, String mimeType) {
 		Mapping previous = this.map.put(extension, new Mapping(extension, mimeType));
-		return (previous == null ? null : previous.getMimeType());
+		return (previous != null) ? previous.getMimeType() : null;
 	}
 
 	/**
@@ -292,7 +292,7 @@ public final class MimeMappings implements Iterable<Mapping> {
 	 */
 	public String get(String extension) {
 		Mapping mapping = this.map.get(extension);
-		return (mapping == null ? null : mapping.getMimeType());
+		return (mapping != null) ? mapping.getMimeType() : null;
 	}
 
 	/**
@@ -302,12 +302,7 @@ public final class MimeMappings implements Iterable<Mapping> {
 	 */
 	public String remove(String extension) {
 		Mapping previous = this.map.remove(extension);
-		return (previous == null ? null : previous.getMimeType());
-	}
-
-	@Override
-	public int hashCode() {
-		return this.map.hashCode();
+		return (previous != null) ? previous.getMimeType() : null;
 	}
 
 	@Override
@@ -323,6 +318,11 @@ public final class MimeMappings implements Iterable<Mapping> {
 			return this.map.equals(other.map);
 		}
 		return false;
+	}
+
+	@Override
+	public int hashCode() {
+		return this.map.hashCode();
 	}
 
 	/**
@@ -360,11 +360,6 @@ public final class MimeMappings implements Iterable<Mapping> {
 		}
 
 		@Override
-		public int hashCode() {
-			return this.extension.hashCode();
-		}
-
-		@Override
 		public boolean equals(Object obj) {
 			if (obj == null) {
 				return false;
@@ -378,6 +373,11 @@ public final class MimeMappings implements Iterable<Mapping> {
 						&& this.mimeType.equals(other.mimeType);
 			}
 			return false;
+		}
+
+		@Override
+		public int hashCode() {
+			return this.extension.hashCode();
 		}
 
 		@Override

@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2015 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
@@ -126,7 +127,7 @@ public class PropertySourcesLoader {
 				if (canLoadFileExtension(loader, resource)) {
 					PropertySource<?> specific = loader.load(sourceName, resource,
 							profile);
-					addPropertySource(group, specific, profile);
+					addPropertySource(group, specific);
 					return specific;
 				}
 			}
@@ -140,21 +141,20 @@ public class PropertySourcesLoader {
 	}
 
 	private String generatePropertySourceName(String name, String profile) {
-		return (profile == null ? name : name + "#" + profile);
+		return (profile != null) ? name + "#" + profile : name;
 	}
 
 	private boolean canLoadFileExtension(PropertySourceLoader loader, Resource resource) {
-		String filename = resource.getFilename().toLowerCase();
+		String filename = resource.getFilename().toLowerCase(Locale.ENGLISH);
 		for (String extension : loader.getFileExtensions()) {
-			if (filename.endsWith("." + extension.toLowerCase())) {
+			if (filename.endsWith("." + extension.toLowerCase(Locale.ENGLISH))) {
 				return true;
 			}
 		}
 		return false;
 	}
 
-	private void addPropertySource(String basename, PropertySource<?> source,
-			String profile) {
+	private void addPropertySource(String basename, PropertySource<?> source) {
 
 		if (source == null) {
 			return;

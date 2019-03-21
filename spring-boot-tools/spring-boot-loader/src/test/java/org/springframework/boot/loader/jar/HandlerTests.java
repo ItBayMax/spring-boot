@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2016 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -134,6 +134,52 @@ public class HandlerTests {
 				.hashCode(new URL("jar:file:/test.jar!/BOOT-INF/classes!/foo.txt")))
 						.isEqualTo(this.handler.hashCode(
 								new URL("jar:file:/test.jar!/BOOT-INF/classes/foo.txt")));
+	}
+
+	@Test
+	public void urlWithSpecReferencingParentDirectory() throws MalformedURLException {
+		assertStandardAndCustomHandlerUrlsAreEqual(
+				"file:/test.jar!/BOOT-INF/classes!/xsd/folderA/a.xsd",
+				"../folderB/b.xsd");
+	}
+
+	@Test
+	public void urlWithSpecReferencingAncestorDirectoryOutsideJarStopsAtJarRoot()
+			throws MalformedURLException {
+		assertStandardAndCustomHandlerUrlsAreEqual(
+				"file:/test.jar!/BOOT-INF/classes!/xsd/folderA/a.xsd",
+				"../../../../../../folderB/b.xsd");
+	}
+
+	@Test
+	public void urlWithSpecReferencingCurrentDirectory() throws MalformedURLException {
+		assertStandardAndCustomHandlerUrlsAreEqual(
+				"file:/test.jar!/BOOT-INF/classes!/xsd/folderA/a.xsd",
+				"./folderB/./b.xsd");
+	}
+
+	@Test
+	public void urlWithRef() throws MalformedURLException {
+		assertStandardAndCustomHandlerUrlsAreEqual("file:/test.jar!/BOOT-INF/classes",
+				"!/foo.txt#alpha");
+	}
+
+	@Test
+	public void urlWithQuery() throws MalformedURLException {
+		assertStandardAndCustomHandlerUrlsAreEqual("file:/test.jar!/BOOT-INF/classes",
+				"!/foo.txt?alpha");
+	}
+
+	private void assertStandardAndCustomHandlerUrlsAreEqual(String context, String spec)
+			throws MalformedURLException {
+		URL standardUrl = new URL(new URL("jar:" + context), spec);
+		URL customHandlerUrl = new URL(new URL("jar", null, -1, context, this.handler),
+				spec);
+		assertThat(customHandlerUrl.toString()).isEqualTo(standardUrl.toString());
+		assertThat(customHandlerUrl.getFile()).isEqualTo(standardUrl.getFile());
+		assertThat(customHandlerUrl.getPath()).isEqualTo(standardUrl.getPath());
+		assertThat(customHandlerUrl.getQuery()).isEqualTo(standardUrl.getQuery());
+		assertThat(customHandlerUrl.getRef()).isEqualTo(standardUrl.getRef());
 	}
 
 	private URL createUrl(String file) throws MalformedURLException {

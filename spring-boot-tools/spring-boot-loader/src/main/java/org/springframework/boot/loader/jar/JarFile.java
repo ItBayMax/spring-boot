@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -108,7 +108,7 @@ public class JarFile extends java.util.jar.JarFile {
 
 	private JarFile(RandomAccessDataFile rootFile, String pathFromRoot,
 			RandomAccessData data, JarEntryFilter filter, JarFileType type)
-					throws IOException {
+			throws IOException {
 		super(rootFile.getFile());
 		this.rootFile = rootFile;
 		this.pathFromRoot = pathFromRoot;
@@ -154,7 +154,7 @@ public class JarFile extends java.util.jar.JarFile {
 
 	@Override
 	public Manifest getManifest() throws IOException {
-		Manifest manifest = (this.manifest == null ? null : this.manifest.get());
+		Manifest manifest = (this.manifest != null) ? this.manifest.get() : null;
 		if (manifest == null) {
 			if (this.type == JarFileType.NESTED_DIRECTORY) {
 				manifest = new JarFile(this.getRootJarFile()).getManifest();
@@ -219,7 +219,7 @@ public class JarFile extends java.util.jar.JarFile {
 		if (ze instanceof JarEntry) {
 			return this.entries.getInputStream((JarEntry) ze, access);
 		}
-		return getInputStream(ze == null ? null : ze.getName(), access);
+		return getInputStream((ze != null) ? ze.getName() : null, access);
 	}
 
 	InputStream getInputStream(String name, ResourceAccess access) throws IOException {
@@ -293,7 +293,7 @@ public class JarFile extends java.util.jar.JarFile {
 
 	@Override
 	public int size() {
-		return (int) this.data.getSize();
+		return this.entries.getSize();
 	}
 
 	@Override

@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2016 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -51,6 +51,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.async.DeferredResult;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.web.servlet.HandlerMapping;
 import org.springframework.web.util.NestedServletException;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -98,6 +99,8 @@ public class MetricFilterAutoConfigurationTests {
 		Filter filter = context.getBean(Filter.class);
 		final MockHttpServletRequest request = new MockHttpServletRequest("GET",
 				"/test/path");
+		request.setAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE,
+				"/test/path");
 		final MockHttpServletResponse response = new MockHttpServletResponse();
 		FilterChain chain = mock(FilterChain.class);
 		willAnswer(new Answer<Object>() {
@@ -110,6 +113,29 @@ public class MetricFilterAutoConfigurationTests {
 		filter.doFilter(request, response, chain);
 		verify(context.getBean(CounterService.class)).increment("status.200.test.path");
 		verify(context.getBean(GaugeService.class)).submit(eq("response.test.path"),
+				anyDouble());
+		context.close();
+	}
+
+	@Test
+	public void usesUnmappedForInteractionsWithNoBestMatchingPattern() throws Exception {
+		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
+				Config.class, MetricFilterAutoConfiguration.class);
+		Filter filter = context.getBean(Filter.class);
+		final MockHttpServletRequest request = new MockHttpServletRequest("GET",
+				"/test/path");
+		final MockHttpServletResponse response = new MockHttpServletResponse();
+		FilterChain chain = mock(FilterChain.class);
+		willAnswer(new Answer<Object>() {
+			@Override
+			public Object answer(InvocationOnMock invocation) throws Throwable {
+				response.setStatus(200);
+				return null;
+			}
+		}).given(chain).doFilter(request, response);
+		filter.doFilter(request, response, chain);
+		verify(context.getBean(CounterService.class)).increment("status.200.unmapped");
+		verify(context.getBean(GaugeService.class)).submit(eq("response.unmapped"),
 				anyDouble());
 		context.close();
 	}
@@ -362,6 +388,8 @@ public class MetricFilterAutoConfigurationTests {
 		Filter filter = context.getBean(Filter.class);
 		final MockHttpServletRequest request = new MockHttpServletRequest("PUT",
 				"/test/path");
+		request.setAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE,
+				"/test/path");
 		final MockHttpServletResponse response = new MockHttpServletResponse();
 		FilterChain chain = mock(FilterChain.class);
 		willAnswer(new Answer<Object>() {
@@ -418,6 +446,8 @@ public class MetricFilterAutoConfigurationTests {
 		context.refresh();
 		Filter filter = context.getBean(Filter.class);
 		final MockHttpServletRequest request = new MockHttpServletRequest("GET",
+				"/test/path");
+		request.setAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE,
 				"/test/path");
 		final MockHttpServletResponse response = new MockHttpServletResponse();
 		FilterChain chain = mock(FilterChain.class);
@@ -548,7 +578,7 @@ public class MetricFilterAutoConfigurationTests {
 		@Override
 		protected void doFilterInternal(HttpServletRequest request,
 				HttpServletResponse response, FilterChain chain)
-						throws ServletException, IOException {
+				throws ServletException, IOException {
 			// send redirect before filter chain is executed, like Spring Security sending
 			// us back to a login page
 			response.sendRedirect("http://example.com");
@@ -563,7 +593,7 @@ public class MetricFilterAutoConfigurationTests {
 		@Override
 		protected void doFilterInternal(HttpServletRequest request,
 				HttpServletResponse response, FilterChain chain)
-						throws ServletException, IOException {
+				throws ServletException, IOException {
 
 			response.sendError(HttpStatus.SERVICE_UNAVAILABLE.value());
 		}

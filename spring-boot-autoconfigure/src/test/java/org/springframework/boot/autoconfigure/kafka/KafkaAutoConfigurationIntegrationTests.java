@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2016 the original author or authors.
+ * Copyright 2012-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,16 +16,20 @@
 
 package org.springframework.boot.autoconfigure.kafka;
 
+import java.io.File;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.After;
+import org.junit.Assume;
+import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 
 import org.springframework.boot.test.util.EnvironmentTestUtils;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.KafkaHeaders;
@@ -48,6 +52,11 @@ public class KafkaAutoConfigurationIntegrationTests {
 			TEST_TOPIC);
 
 	private AnnotationConfigApplicationContext context;
+
+	@Before
+	public void doNotRunOnWindows() {
+		Assume.assumeFalse(isWindows());
+	}
 
 	@After
 	public void close() {
@@ -86,6 +95,11 @@ public class KafkaAutoConfigurationIntegrationTests {
 		return applicationContext;
 	}
 
+	private boolean isWindows() {
+		return File.separatorChar == '\\';
+	}
+
+	@Configuration
 	public static class KafkaConfig {
 
 		@Bean

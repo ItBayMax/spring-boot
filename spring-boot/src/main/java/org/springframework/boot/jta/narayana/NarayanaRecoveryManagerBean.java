@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2016 the original author or authors.
+ * Copyright 2012-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,8 +16,6 @@
 
 package org.springframework.boot.jta.narayana;
 
-import com.arjuna.ats.arjuna.recovery.RecoveryManager;
-import com.arjuna.ats.arjuna.recovery.RecoveryModule;
 import com.arjuna.ats.internal.jta.recovery.arjunacore.XARecoveryModule;
 import com.arjuna.ats.jbossatx.jta.RecoveryManagerService;
 import com.arjuna.ats.jta.recovery.XAResourceRecoveryHelper;
@@ -55,15 +53,14 @@ public class NarayanaRecoveryManagerBean implements InitializingBean, Disposable
 
 	void registerXAResourceRecoveryHelper(
 			XAResourceRecoveryHelper xaResourceRecoveryHelper) {
-		getXARecoveryModule(RecoveryManager.manager())
-				.addXAResourceRecoveryHelper(xaResourceRecoveryHelper);
+		getXARecoveryModule().addXAResourceRecoveryHelper(xaResourceRecoveryHelper);
 	}
 
-	private XARecoveryModule getXARecoveryModule(RecoveryManager recoveryManager) {
-		for (RecoveryModule recoveryModule : recoveryManager.getModules()) {
-			if (recoveryModule instanceof XARecoveryModule) {
-				return (XARecoveryModule) recoveryModule;
-			}
+	private XARecoveryModule getXARecoveryModule() {
+		XARecoveryModule xaRecoveryModule = XARecoveryModule
+				.getRegisteredXARecoveryModule();
+		if (xaRecoveryModule != null) {
+			return xaRecoveryModule;
 		}
 		throw new IllegalStateException(
 				"XARecoveryModule is not registered with recovery manager");

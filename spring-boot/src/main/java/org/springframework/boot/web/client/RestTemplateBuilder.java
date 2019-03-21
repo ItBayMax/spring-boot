@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2016 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.http.client.AbstractClientHttpRequestFactoryWrapper;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
@@ -168,7 +169,8 @@ public class RestTemplateBuilder {
 	/**
 	 * Set the {@link HttpMessageConverter HttpMessageConverters} that should be used with
 	 * the {@link RestTemplate}. Setting this value will replace any previously configured
-	 * converters.
+	 * converters and any converters configured on the builder will replace RestTemplate's
+	 * default converters.
 	 * @param messageConverters the converters to set
 	 * @return a new builder instance
 	 * @see #additionalMessageConverters(HttpMessageConverter...)
@@ -182,7 +184,8 @@ public class RestTemplateBuilder {
 	/**
 	 * Set the {@link HttpMessageConverter HttpMessageConverters} that should be used with
 	 * the {@link RestTemplate}. Setting this value will replace any previously configured
-	 * converters.
+	 * converters and any converters configured on the builder will replace RestTemplate's
+	 * default converters.
 	 * @param messageConverters the converters to set
 	 * @return a new builder instance
 	 * @see #additionalMessageConverters(HttpMessageConverter...)
@@ -200,7 +203,8 @@ public class RestTemplateBuilder {
 
 	/**
 	 * Add additional {@link HttpMessageConverter HttpMessageConverters} that should be
-	 * used with the {@link RestTemplate}.
+	 * used with the {@link RestTemplate}. Any converters configured on the builder will
+	 * replace RestTemplate's default converters.
 	 * @param messageConverters the converters to add
 	 * @return a new builder instance
 	 * @see #messageConverters(HttpMessageConverter...)
@@ -213,7 +217,8 @@ public class RestTemplateBuilder {
 
 	/**
 	 * Add additional {@link HttpMessageConverter HttpMessageConverters} that should be
-	 * used with the {@link RestTemplate}.
+	 * used with the {@link RestTemplate}. Any converters configured on the builder will
+	 * replace RestTemplate's default converters.
 	 * @param messageConverters the converters to add
 	 * @return a new builder instance
 	 * @see #messageConverters(HttpMessageConverter...)
@@ -336,6 +341,9 @@ public class RestTemplateBuilder {
 	/**
 	 * Set the {@link ClientHttpRequestFactory} that should be used with the
 	 * {@link RestTemplate}.
+	 * <p>
+	 * Note that this request factory will be shared with all builder instances derived
+	 * from that point.
 	 * @param requestFactory the request factory to use
 	 * @return a new builder instance
 	 */
@@ -591,22 +599,37 @@ public class RestTemplateBuilder {
 			if (ClassUtils.isPresent(candidate.getKey(), classLoader)) {
 				Class<?> factoryClass = ClassUtils.resolveClassName(candidate.getValue(),
 						classLoader);
-				return (ClientHttpRequestFactory) BeanUtils.instantiate(factoryClass);
+				ClientHttpRequestFactory requestFactory = (ClientHttpRequestFactory) BeanUtils
+						.instantiate(factoryClass);
+				initializeIfNecessary(requestFactory);
+				return requestFactory;
 			}
 		}
 		return new SimpleClientHttpRequestFactory();
 	}
 
+	private void initializeIfNecessary(ClientHttpRequestFactory requestFactory) {
+		if (requestFactory instanceof InitializingBean) {
+			try {
+				((InitializingBean) requestFactory).afterPropertiesSet();
+			}
+			catch (Exception ex) {
+				throw new IllegalStateException(
+						"Failed to initialize request factory " + requestFactory, ex);
+			}
+		}
+	}
+
 	private <T> Set<T> append(Set<T> set, T addition) {
 		Set<T> result = new LinkedHashSet<T>(
-				set == null ? Collections.<T>emptySet() : set);
+				(set != null) ? set : Collections.<T>emptySet());
 		result.add(addition);
 		return Collections.unmodifiableSet(result);
 	}
 
 	private <T> Set<T> append(Set<T> set, Collection<? extends T> additions) {
 		Set<T> result = new LinkedHashSet<T>(
-				set == null ? Collections.<T>emptySet() : set);
+				(set != null) ? set : Collections.<T>emptySet());
 		result.addAll(additions);
 		return Collections.unmodifiableSet(result);
 	}
@@ -623,7 +646,7 @@ public class RestTemplateBuilder {
 	/**
 	 * {@link RequestFactoryCustomizer} to call a "set timeout" method.
 	 */
-	private static abstract class TimeoutRequestFactoryCustomizer
+	private abstract static class TimeoutRequestFactoryCustomizer
 			implements RequestFactoryCustomizer {
 
 		private final int timeout;

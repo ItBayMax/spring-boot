@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2015 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -80,7 +80,7 @@ public class RedisMultiMetricRepository implements MultiMetricRepository {
 		List<String> values = this.redisOperations.opsForValue().multiGet(keys);
 		for (String v : values) {
 			String key = keysIt.next();
-			result.add(deserialize(group, key, v, zSetOperations.score(key)));
+			result.add(deserialize(key, v, zSetOperations.score(key)));
 		}
 		return result;
 
@@ -143,7 +143,7 @@ public class RedisMultiMetricRepository implements MultiMetricRepository {
 		this.zSetOperations.remove(groupKey);
 	}
 
-	private Metric<?> deserialize(String group, String redisKey, String v, Double value) {
+	private Metric<?> deserialize(String redisKey, String v, Double value) {
 		Date timestamp = new Date(Long.valueOf(v));
 		return new Metric<Double>(nameFor(redisKey), value, timestamp);
 	}

@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -23,6 +23,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -145,8 +146,8 @@ public class ConfigurationMetadata {
 	}
 
 	private ItemMetadata findMatchingItemMetadata(ItemMetadata metadata) {
-		List<ItemMetadata> candidates = this.items.get(metadata.getName());
-		if (candidates == null || candidates.isEmpty()) {
+		List<ItemMetadata> candidates = getCandidates(metadata.getName());
+		if (candidates.isEmpty()) {
 			return null;
 		}
 		ListIterator<ItemMetadata> it = candidates.listIterator();
@@ -166,6 +167,12 @@ public class ConfigurationMetadata {
 		return null;
 	}
 
+	private List<ItemMetadata> getCandidates(String name) {
+		List<ItemMetadata> candidates = this.items.get(name);
+		return (candidates != null) ? new ArrayList<ItemMetadata>(candidates)
+				: new ArrayList<ItemMetadata>();
+	}
+
 	private boolean nullSafeEquals(Object o1, Object o2) {
 		if (o1 == o2) {
 			return true;
@@ -174,7 +181,7 @@ public class ConfigurationMetadata {
 	}
 
 	public static String nestedPrefix(String prefix, String name) {
-		String nestedPrefix = (prefix == null ? "" : prefix);
+		String nestedPrefix = (prefix != null) ? prefix : "";
 		String dashedName = toDashedCase(name);
 		nestedPrefix += ("".equals(nestedPrefix) ? dashedName : "." + dashedName);
 		return nestedPrefix;
@@ -197,7 +204,7 @@ public class ConfigurationMetadata {
 			previous = current;
 
 		}
-		return dashed.toString().toLowerCase();
+		return dashed.toString().toLowerCase(Locale.ENGLISH);
 	}
 
 	private static <T extends Comparable<T>> List<T> flattenValues(Map<?, List<T>> map) {

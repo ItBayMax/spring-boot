@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -51,9 +51,11 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
+import org.springframework.beans.BeansException;
 import org.springframework.beans.DirectFieldAccessor;
 import org.springframework.beans.factory.BeanCreationException;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
+import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.boot.autoconfigure.cache.support.MockCachingProvider;
 import org.springframework.boot.autoconfigure.hazelcast.HazelcastAutoConfiguration;
 import org.springframework.boot.test.util.EnvironmentTestUtils;
@@ -370,6 +372,16 @@ public class CacheAutoConfigurationTests {
 		load(JCacheCustomConfiguration.class, "spring.cache.type=jcache",
 				"spring.cache.jcache.provider=" + cachingProviderFqn,
 				"spring.cache.jcache.config=" + configLocation);
+	}
+
+	@Test
+	public void jCacheCacheUseBeanClassLoader() {
+		String cachingProviderFqn = MockCachingProvider.class.getName();
+		load(DefaultCacheConfiguration.class, "spring.cache.type=jcache",
+				"spring.cache.jcache.provider=" + cachingProviderFqn);
+		JCacheCacheManager cacheManager = validateCacheManager(JCacheCacheManager.class);
+		assertThat(cacheManager.getCacheManager().getClassLoader())
+				.isEqualTo(this.context.getClassLoader());
 	}
 
 	@Test
@@ -770,6 +782,17 @@ public class CacheAutoConfigurationTests {
 		validateCaffeineCacheWithStats();
 	}
 
+	@Test
+	public void autoConfiguredCacheManagerCanBeSwapped() {
+		load(CacheManagerPostProcessorConfiguration.class, "spring.cache.type=caffeine");
+		validateCacheManager(SimpleCacheManager.class);
+		CacheManagerPostProcessor postProcessor = this.context
+				.getBean(CacheManagerPostProcessor.class);
+		assertThat(postProcessor.cacheManagers).hasSize(1);
+		assertThat(postProcessor.cacheManagers.get(0))
+				.isInstanceOf(CaffeineCacheManager.class);
+	}
+
 	private void validateCaffeineCacheWithStats() {
 		CaffeineCacheManager cacheManager = validateCacheManager(
 				CaffeineCacheManager.class);
@@ -1149,7 +1172,7 @@ public class CacheAutoConfigurationTests {
 
 	}
 
-	static abstract class CacheManagerTestCustomizer<T extends CacheManager>
+	abstract static class CacheManagerTestCustomizer<T extends CacheManager>
 			implements CacheManagerCustomizer<T> {
 
 		private T cacheManager;
@@ -1160,6 +1183,39 @@ public class CacheAutoConfigurationTests {
 				throw new IllegalStateException("Customized invoked twice");
 			}
 			this.cacheManager = cacheManager;
+		}
+
+	}
+
+	@Configuration
+	@EnableCaching
+	static class CacheManagerPostProcessorConfiguration {
+
+		@Bean
+		public static BeanPostProcessor cacheManagerBeanPostProcessor() {
+			return new CacheManagerPostProcessor();
+		}
+
+	}
+
+	private static class CacheManagerPostProcessor implements BeanPostProcessor {
+
+		private final List<CacheManager> cacheManagers = new ArrayList<CacheManager>();
+
+		@Override
+		public Object postProcessBeforeInitialization(Object bean, String beanName)
+				throws BeansException {
+			return bean;
+		}
+
+		@Override
+		public Object postProcessAfterInitialization(Object bean, String beanName)
+				throws BeansException {
+			if (bean instanceof CacheManager) {
+				this.cacheManagers.add((CacheManager) bean);
+				return new SimpleCacheManager();
+			}
+			return bean;
 		}
 
 	}

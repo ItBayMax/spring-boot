@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,7 +24,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import com.mongodb.Mongo;
 import com.mongodb.MongoClient;
 import de.flapdoodle.embed.mongo.Command;
 import de.flapdoodle.embed.mongo.MongodExecutable;
@@ -77,7 +76,7 @@ import org.springframework.util.Assert;
 @Configuration
 @EnableConfigurationProperties({ MongoProperties.class, EmbeddedMongoProperties.class })
 @AutoConfigureBefore(MongoAutoConfiguration.class)
-@ConditionalOnClass({ Mongo.class, MongodStarter.class })
+@ConditionalOnClass({ MongoClient.class, MongodStarter.class })
 public class EmbeddedMongoAutoConfiguration {
 
 	private static final byte[] IP4_LOOPBACK_ADDRESS = { 127, 0, 0, 1 };
@@ -129,13 +128,13 @@ public class EmbeddedMongoAutoConfiguration {
 				this.embeddedProperties.getFeatures());
 		MongodConfigBuilder builder = new MongodConfigBuilder()
 				.version(featureAwareVersion);
-		if (this.embeddedProperties.getStorage() != null) {
-			builder.replication(
-					new Storage(this.embeddedProperties.getStorage().getDatabaseDir(),
-							this.embeddedProperties.getStorage().getReplSetName(),
-							this.embeddedProperties.getStorage().getOplogSize() != null
-									? this.embeddedProperties.getStorage().getOplogSize()
-									: 0));
+		org.springframework.boot.autoconfigure.mongo.embedded.EmbeddedMongoProperties.Storage storage = this.embeddedProperties
+				.getStorage();
+		if (storage != null) {
+			String databaseDir = storage.getDatabaseDir();
+			String replSetName = storage.getReplSetName();
+			int oplogSize = (storage.getOplogSize() != null) ? storage.getOplogSize() : 0;
+			builder.replication(new Storage(databaseDir, replSetName, oplogSize));
 		}
 		Integer configuredPort = this.properties.getPort();
 		if (configuredPort != null && configuredPort > 0) {
@@ -229,7 +228,7 @@ public class EmbeddedMongoAutoConfiguration {
 	 * A workaround for the lack of a {@code toString} implementation on
 	 * {@code GenericFeatureAwareVersion}.
 	 */
-	private final static class ToStringFriendlyFeatureAwareVersion
+	private static final class ToStringFriendlyFeatureAwareVersion
 			implements IFeatureAwareVersion {
 
 		private final String version;
@@ -240,8 +239,8 @@ public class EmbeddedMongoAutoConfiguration {
 				Set<Feature> features) {
 			Assert.notNull(version, "version must not be null");
 			this.version = version;
-			this.features = (features == null ? Collections.<Feature>emptySet()
-					: features);
+			this.features = (features != null) ? features
+					: Collections.<Feature>emptySet();
 		}
 
 		@Override
@@ -252,20 +251,6 @@ public class EmbeddedMongoAutoConfiguration {
 		@Override
 		public boolean enabled(Feature feature) {
 			return this.features.contains(feature);
-		}
-
-		@Override
-		public String toString() {
-			return this.version;
-		}
-
-		@Override
-		public int hashCode() {
-			final int prime = 31;
-			int result = 1;
-			result = prime * result + this.features.hashCode();
-			result = prime * result + this.version.hashCode();
-			return result;
 		}
 
 		@Override
@@ -284,6 +269,20 @@ public class EmbeddedMongoAutoConfiguration {
 				return equals;
 			}
 			return super.equals(obj);
+		}
+
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + this.features.hashCode();
+			result = prime * result + this.version.hashCode();
+			return result;
+		}
+
+		@Override
+		public String toString() {
+			return this.version;
 		}
 
 	}

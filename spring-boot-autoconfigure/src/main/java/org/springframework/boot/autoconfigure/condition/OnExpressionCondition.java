@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2016 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -29,6 +29,7 @@ import org.springframework.core.type.AnnotatedTypeMetadata;
  * A Condition that evaluates a SpEL expression.
  *
  * @author Dave Syer
+ * @author Stephane Nicoll
  * @see ConditionalOnExpression
  */
 @Order(Ordered.LOWEST_PRECEDENCE - 20)
@@ -43,18 +44,28 @@ class OnExpressionCondition extends SpringBootCondition {
 		expression = wrapIfNecessary(expression);
 		String rawExpression = expression;
 		expression = context.getEnvironment().resolvePlaceholders(expression);
+		ConditionMessage.Builder messageBuilder = ConditionMessage
+				.forCondition(ConditionalOnExpression.class, "(" + rawExpression + ")");
 		ConfigurableListableBeanFactory beanFactory = context.getBeanFactory();
-		BeanExpressionResolver resolver = (beanFactory != null)
-				? beanFactory.getBeanExpressionResolver() : null;
-		BeanExpressionContext expressionContext = (beanFactory != null)
-				? new BeanExpressionContext(beanFactory, null) : null;
+		if (beanFactory != null) {
+			boolean result = evaluateExpression(beanFactory, expression);
+			return new ConditionOutcome(result, messageBuilder.resultedIn(result));
+		}
+		else {
+			return ConditionOutcome
+					.noMatch(messageBuilder.because("no BeanFactory available."));
+		}
+	}
+
+	private Boolean evaluateExpression(ConfigurableListableBeanFactory beanFactory,
+			String expression) {
+		BeanExpressionResolver resolver = beanFactory.getBeanExpressionResolver();
 		if (resolver == null) {
 			resolver = new StandardBeanExpressionResolver();
 		}
-		boolean result = (Boolean) resolver.evaluate(expression, expressionContext);
-		return new ConditionOutcome(result, ConditionMessage
-				.forCondition(ConditionalOnExpression.class, "(" + rawExpression + ")")
-				.resultedIn(result));
+		BeanExpressionContext expressionContext = new BeanExpressionContext(beanFactory,
+				null);
+		return (Boolean) resolver.evaluate(expression, expressionContext);
 	}
 
 	/**

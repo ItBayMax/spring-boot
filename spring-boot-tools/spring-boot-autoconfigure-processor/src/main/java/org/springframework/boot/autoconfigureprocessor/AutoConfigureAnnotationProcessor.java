@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -29,6 +29,7 @@ import java.util.Set;
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedAnnotationTypes;
+import javax.lang.model.SourceVersion;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
@@ -78,6 +79,11 @@ public class AutoConfigureAnnotationProcessor extends AbstractProcessor {
 				"org.springframework.boot.autoconfigure.AutoConfigureAfter");
 		annotations.put("AutoConfigureOrder",
 				"org.springframework.boot.autoconfigure.AutoConfigureOrder");
+	}
+
+	@Override
+	public SourceVersion getSupportedSourceVersion() {
+		return SourceVersion.latestSupported();
 	}
 
 	@Override
@@ -144,7 +150,7 @@ public class AutoConfigureAnnotationProcessor extends AbstractProcessor {
 	private String toCommaDelimitedString(List<Object> list) {
 		StringBuilder result = new StringBuilder();
 		for (Object item : list) {
-			result.append(result.length() != 0 ? "," : "");
+			result.append((result.length() != 0) ? "," : "");
 			result.append(item);
 		}
 		return result.toString();
@@ -160,15 +166,22 @@ public class AutoConfigureAnnotationProcessor extends AbstractProcessor {
 				Object value = entry.getValue().getValue();
 				if (value instanceof List) {
 					for (AnnotationValue annotationValue : (List<AnnotationValue>) value) {
-						result.add(annotationValue.getValue());
+						result.add(processValue(annotationValue.getValue()));
 					}
 				}
 				else {
-					result.add(value);
+					result.add(processValue(value));
 				}
 			}
 		}
 		return result;
+	}
+
+	private Object processValue(Object value) {
+		if (value instanceof DeclaredType) {
+			return getQualifiedName(((DeclaredType) value).asElement());
+		}
+		return value;
 	}
 
 	private String getQualifiedName(Element element) {

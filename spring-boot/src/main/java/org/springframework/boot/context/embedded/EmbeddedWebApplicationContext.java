@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2016 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -51,6 +51,7 @@ import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.context.support.GenericWebApplicationContext;
 import org.springframework.web.context.support.ServletContextAwareProcessor;
 import org.springframework.web.context.support.ServletContextResource;
+import org.springframework.web.context.support.ServletContextScope;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 
 /**
@@ -114,6 +115,7 @@ public class EmbeddedWebApplicationContext extends GenericWebApplicationContext 
 		beanFactory.addBeanPostProcessor(
 				new WebApplicationContextServletContextAwareProcessor(this));
 		beanFactory.ignoreDependencyInterface(ServletContextAware.class);
+		registerWebApplicationScopes();
 	}
 
 	@Override
@@ -217,17 +219,26 @@ public class EmbeddedWebApplicationContext extends GenericWebApplicationContext 
 
 	private void selfInitialize(ServletContext servletContext) throws ServletException {
 		prepareEmbeddedWebApplicationContext(servletContext);
-		ConfigurableListableBeanFactory beanFactory = getBeanFactory();
-		ExistingWebApplicationScopes existingScopes = new ExistingWebApplicationScopes(
-				beanFactory);
-		WebApplicationContextUtils.registerWebApplicationScopes(beanFactory,
-				getServletContext());
-		existingScopes.restore();
-		WebApplicationContextUtils.registerEnvironmentBeans(beanFactory,
-				getServletContext());
+		registerApplicationScope(servletContext);
+		WebApplicationContextUtils.registerEnvironmentBeans(getBeanFactory(),
+				servletContext);
 		for (ServletContextInitializer beans : getServletContextInitializerBeans()) {
 			beans.onStartup(servletContext);
 		}
+	}
+
+	private void registerApplicationScope(ServletContext servletContext) {
+		ServletContextScope appScope = new ServletContextScope(servletContext);
+		getBeanFactory().registerScope(WebApplicationContext.SCOPE_APPLICATION, appScope);
+		// Register as ServletContext attribute, for ContextCleanupListener to detect it.
+		servletContext.setAttribute(ServletContextScope.class.getName(), appScope);
+	}
+
+	private void registerWebApplicationScopes() {
+		ExistingWebApplicationScopes existingScopes = new ExistingWebApplicationScopes(
+				getBeanFactory());
+		WebApplicationContextUtils.registerWebApplicationScopes(getBeanFactory());
+		existingScopes.restore();
 	}
 
 	/**

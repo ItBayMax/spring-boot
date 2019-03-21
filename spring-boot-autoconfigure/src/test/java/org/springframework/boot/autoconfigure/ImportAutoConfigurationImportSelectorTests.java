@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -37,6 +37,7 @@ import org.springframework.core.env.Environment;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.core.type.classreading.SimpleMetadataReaderFactory;
+import org.springframework.util.ClassUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verifyZeroInteractions;
@@ -125,7 +126,6 @@ public class ImportAutoConfigurationImportSelectorTests {
 	public void exclusionsAliasesAreApplied() throws Exception {
 		AnnotationMetadata annotationMetadata = getAnnotationMetadata(
 				ImportWithSelfAnnotatingAnnotationExclude.class);
-
 		String[] imports = this.importSelector.selectImports(annotationMetadata);
 		assertThat(imports).isEmpty();
 	}
@@ -180,6 +180,19 @@ public class ImportAutoConfigurationImportSelectorTests {
 		Set<Object> set2 = this.importSelector.determineImports(
 				getAnnotationMetadata(ImportMetaAutoConfigurationWithUnrelatedTwo.class));
 		assertThat(set1).isNotEqualTo(set2);
+	}
+
+	@Test
+	public void determineImportsShouldNotSetPackageImport() throws Exception {
+		Class<?> packageImportClass = ClassUtils.resolveClassName(
+				"org.springframework.boot.autoconfigure.AutoConfigurationPackages.PackageImport",
+				null);
+		Set<Object> selectedImports = this.importSelector
+				.determineImports(getAnnotationMetadata(
+						ImportMetaAutoConfigurationExcludeWithUnrelatedOne.class));
+		for (Object selectedImport : selectedImports) {
+			assertThat(selectedImport).isNotInstanceOf(packageImportClass);
+		}
 	}
 
 	private AnnotationMetadata getAnnotationMetadata(Class<?> source) throws IOException {

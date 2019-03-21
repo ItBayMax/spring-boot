@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -101,6 +101,7 @@ import org.springframework.util.StringUtils;
  * @author Eddú Meléndez
  * @author Venil Noronha
  * @author Henri Kerola
+ * @author Henrich Krämer
  * @see #setPort(int)
  * @see #setConfigurations(Collection)
  * @see JettyEmbeddedServletContainer
@@ -168,7 +169,7 @@ public class JettyEmbeddedServletContainerFactory
 	public EmbeddedServletContainer getEmbeddedServletContainer(
 			ServletContextInitializer... initializers) {
 		JettyEmbeddedWebAppContext context = new JettyEmbeddedWebAppContext();
-		int port = (getPort() >= 0 ? getPort() : 0);
+		int port = (getPort() >= 0) ? getPort() : 0;
 		InetSocketAddress address = new InetSocketAddress(getAddress(), port);
 		Server server = createServer(address);
 		configureWebAppContext(context, initializers);
@@ -178,7 +179,7 @@ public class JettyEmbeddedServletContainerFactory
 			SslContextFactory sslContextFactory = new SslContextFactory();
 			configureSsl(sslContextFactory, getSsl());
 			AbstractConnector connector = getSslServerConnectorFactory()
-					.getConnector(server, sslContextFactory, port);
+					.createConnector(server, sslContextFactory, address);
 			server.setConnectors(new Connector[] { connector });
 		}
 		for (JettyServerCustomizer customizer : getServerCustomizers()) {
@@ -367,6 +368,7 @@ public class JettyEmbeddedServletContainerFactory
 		Configuration[] configurations = getWebAppContextConfigurations(context,
 				initializersToUse);
 		context.setConfigurations(configurations);
+		context.setThrowUnavailableOnStartupException(true);
 		configureSession(context);
 		postProcessWebAppContext(context);
 	}
@@ -402,12 +404,12 @@ public class JettyEmbeddedServletContainerFactory
 
 	private File getTempDirectory() {
 		String temp = System.getProperty("java.io.tmpdir");
-		return (temp == null ? null : new File(temp));
+		return (temp != null) ? new File(temp) : null;
 	}
 
 	private void configureDocumentRoot(WebAppContext handler) {
 		File root = getValidDocumentRoot();
-		root = (root != null ? root : createTempDir("jetty-docbase"));
+		root = (root != null) ? root : createTempDir("jetty-docbase");
 		try {
 			List<Resource> resources = new ArrayList<Resource>();
 			resources.add(
@@ -429,9 +431,9 @@ public class JettyEmbeddedServletContainerFactory
 		}
 	}
 
-	private Resource createResource(URL url) throws IOException {
+	private Resource createResource(URL url) throws Exception {
 		if ("file".equals(url.getProtocol())) {
-			File file = new File(url.getFile());
+			File file = new File(url.toURI());
 			if (file.isFile()) {
 				return Resource.newResource("jar:" + url + "!/META-INF/resources");
 			}
@@ -698,8 +700,8 @@ public class JettyEmbeddedServletContainerFactory
 	 */
 	private interface SslServerConnectorFactory {
 
-		AbstractConnector getConnector(Server server, SslContextFactory sslContextFactory,
-				int port);
+		AbstractConnector createConnector(Server server,
+				SslContextFactory sslContextFactory, InetSocketAddress address);
 
 	}
 
@@ -710,8 +712,8 @@ public class JettyEmbeddedServletContainerFactory
 			implements SslServerConnectorFactory {
 
 		@Override
-		public ServerConnector getConnector(Server server,
-				SslContextFactory sslContextFactory, int port) {
+		public ServerConnector createConnector(Server server,
+				SslContextFactory sslContextFactory, InetSocketAddress address) {
 			HttpConfiguration config = new HttpConfiguration();
 			config.setSendServerVersion(false);
 			config.addCustomizer(new SecureRequestCustomizer());
@@ -720,7 +722,8 @@ public class JettyEmbeddedServletContainerFactory
 					sslContextFactory, HttpVersion.HTTP_1_1.asString());
 			ServerConnector serverConnector = new ServerConnector(server,
 					sslConnectionFactory, connectionFactory);
-			serverConnector.setPort(port);
+			serverConnector.setPort(address.getPort());
+			serverConnector.setHost(address.getHostString());
 			return serverConnector;
 		}
 
@@ -733,8 +736,8 @@ public class JettyEmbeddedServletContainerFactory
 			implements SslServerConnectorFactory {
 
 		@Override
-		public AbstractConnector getConnector(Server server,
-				SslContextFactory sslContextFactory, int port) {
+		public AbstractConnector createConnector(Server server,
+				SslContextFactory sslContextFactory, InetSocketAddress address) {
 			try {
 				Class<?> connectorClass = Class
 						.forName("org.eclipse.jetty.server.ssl.SslSocketConnector");
@@ -742,7 +745,9 @@ public class JettyEmbeddedServletContainerFactory
 						.getConstructor(SslContextFactory.class)
 						.newInstance(sslContextFactory);
 				connector.getClass().getMethod("setPort", int.class).invoke(connector,
-						port);
+						address.getPort());
+				connector.getClass().getMethod("setHost", String.class).invoke(connector,
+						address.getHostString());
 				return connector;
 			}
 			catch (Exception ex) {
@@ -895,7 +900,7 @@ public class JettyEmbeddedServletContainerFactory
 				ReflectionUtils.findMethod(connectorClass, "setPort", int.class)
 						.invoke(connector, address.getPort());
 				ReflectionUtils.findMethod(connectorClass, "setHost", String.class)
-						.invoke(connector, address.getHostName());
+						.invoke(connector, address.getHostString());
 				if (acceptors > 0) {
 					ReflectionUtils.findMethod(connectorClass, "setAcceptors", int.class)
 							.invoke(connector, acceptors);
@@ -924,7 +929,7 @@ public class JettyEmbeddedServletContainerFactory
 		public AbstractConnector createConnector(Server server, InetSocketAddress address,
 				int acceptors, int selectors) {
 			ServerConnector connector = new ServerConnector(server, acceptors, selectors);
-			connector.setHost(address.getHostName());
+			connector.setHost(address.getHostString());
 			connector.setPort(address.getPort());
 			for (ConnectionFactory connectionFactory : connector
 					.getConnectionFactories()) {
@@ -1008,7 +1013,7 @@ public class JettyEmbeddedServletContainerFactory
 				SessionDirectory sessionDirectory) {
 			SessionHandler handler = context.getSessionHandler();
 			Object manager = getSessionManager(handler);
-			setMaxInactiveInterval(manager, timeout > 0 ? timeout : -1);
+			setMaxInactiveInterval(manager, (timeout > 0) ? timeout : -1);
 			if (persist) {
 				Class<?> hashSessionManagerClass = ClassUtils.resolveClassName(
 						"org.eclipse.jetty.server.session.HashSessionManager",
@@ -1058,7 +1063,7 @@ public class JettyEmbeddedServletContainerFactory
 		public void configure(WebAppContext context, int timeout, boolean persist,
 				SessionDirectory sessionDirectory) {
 			SessionHandler handler = context.getSessionHandler();
-			handler.setMaxInactiveInterval(timeout > 0 ? timeout : -1);
+			handler.setMaxInactiveInterval((timeout > 0) ? timeout : -1);
 			if (persist) {
 				DefaultSessionCache cache = new DefaultSessionCache(handler);
 				FileSessionDataStore store = new FileSessionDataStore();

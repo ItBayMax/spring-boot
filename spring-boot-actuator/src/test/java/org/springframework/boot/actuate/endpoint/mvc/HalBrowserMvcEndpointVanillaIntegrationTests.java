@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -110,7 +110,7 @@ public class HalBrowserMvcEndpointVanillaIntegrationTests {
 			if ("/actuator".equals(path)) {
 				continue;
 			}
-			path = path.startsWith("/") ? path.substring(1) : path;
+			path = (path.startsWith("/") ? path.substring(1) : path);
 			this.mockMvc.perform(get("/actuator").accept(MediaType.APPLICATION_JSON))
 					.andExpect(status().isOk())
 					.andExpect(jsonPath("$._links.%s.href", path).exists());
@@ -126,7 +126,7 @@ public class HalBrowserMvcEndpointVanillaIntegrationTests {
 			if (collections.contains(path)) {
 				continue;
 			}
-			path = path.length() > 0 ? path : "/";
+			path = (path.length() > 0) ? path : "/";
 			this.mockMvc.perform(get(path).accept(MediaType.APPLICATION_JSON))
 					.andExpect(status().isOk()).andExpect(jsonPath("$._links.self.href")
 							.value("http://localhost" + endpoint.getPath()));

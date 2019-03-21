@@ -1,15 +1,15 @@
 buildscript {
 	ext {
-		springBootVersion = '1.5.5.BUILD-SNAPSHOT'
+		springBootVersion = '1.5.20.BUILD-SNAPSHOT'
 		springLoadedVersion = '1.2.4.RELEASE'
 	}
 	repositories {
 		// NOTE: You should declare only repositories that you need here
 		mavenLocal()
 		mavenCentral()
-		maven { url "http://repo.spring.io/release" }
-		maven { url "http://repo.spring.io/milestone" }
-		maven { url "http://repo.spring.io/snapshot" }
+		maven { url "https://repo.spring.io/release" }
+		maven { url "https://repo.spring.io/milestone" }
+		maven { url "https://repo.spring.io/snapshot" }
 	}
 	dependencies {
 		classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
@@ -36,9 +36,9 @@ repositories {
 	// NOTE: You should declare only repositories that you need here
 	mavenLocal()
 	mavenCentral()
-	maven { url "http://repo.spring.io/release" }
-	maven { url "http://repo.spring.io/milestone" }
-	maven { url "http://repo.spring.io/snapshot" }
+	maven { url "https://repo.spring.io/release" }
+	maven { url "https://repo.spring.io/milestone" }
+	maven { url "https://repo.spring.io/snapshot" }
 }
 
 dependencies {

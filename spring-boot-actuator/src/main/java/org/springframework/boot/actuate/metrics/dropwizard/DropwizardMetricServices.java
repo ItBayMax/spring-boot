@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -80,8 +80,8 @@ public class DropwizardMetricServices implements CounterService, GaugeService {
 	public DropwizardMetricServices(MetricRegistry registry,
 			ReservoirFactory reservoirFactory) {
 		this.registry = registry;
-		this.reservoirFactory = (reservoirFactory == null ? ReservoirFactory.NONE
-				: reservoirFactory);
+		this.reservoirFactory = (reservoirFactory != null) ? reservoirFactory
+				: ReservoirFactory.NONE;
 	}
 
 	@Override
@@ -199,7 +199,7 @@ public class DropwizardMetricServices implements CounterService, GaugeService {
 	/**
 	 * Simple {@link Gauge} implementation to {@literal double} value.
 	 */
-	private final static class SimpleGauge implements Gauge<Double> {
+	private static final class SimpleGauge implements Gauge<Double> {
 
 		private volatile double value;
 
@@ -221,7 +221,7 @@ public class DropwizardMetricServices implements CounterService, GaugeService {
 	/**
 	 * Strategy used to register metrics.
 	 */
-	private static abstract class MetricRegistrar<T extends Metric> {
+	private abstract static class MetricRegistrar<T extends Metric> {
 
 		private final Class<T> type;
 

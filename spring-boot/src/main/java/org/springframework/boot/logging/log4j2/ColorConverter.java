@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2016 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -52,25 +52,25 @@ public final class ColorConverter extends LogEventPatternConverter {
 	private static final Map<String, AnsiElement> ELEMENTS;
 
 	static {
-		Map<String, AnsiElement> elements = new HashMap<String, AnsiElement>();
-		elements.put("faint", AnsiStyle.FAINT);
-		elements.put("red", AnsiColor.RED);
-		elements.put("green", AnsiColor.GREEN);
-		elements.put("yellow", AnsiColor.YELLOW);
-		elements.put("blue", AnsiColor.BLUE);
-		elements.put("magenta", AnsiColor.MAGENTA);
-		elements.put("cyan", AnsiColor.CYAN);
-		ELEMENTS = Collections.unmodifiableMap(elements);
+		Map<String, AnsiElement> ansiElements = new HashMap<String, AnsiElement>();
+		ansiElements.put("faint", AnsiStyle.FAINT);
+		ansiElements.put("red", AnsiColor.RED);
+		ansiElements.put("green", AnsiColor.GREEN);
+		ansiElements.put("yellow", AnsiColor.YELLOW);
+		ansiElements.put("blue", AnsiColor.BLUE);
+		ansiElements.put("magenta", AnsiColor.MAGENTA);
+		ansiElements.put("cyan", AnsiColor.CYAN);
+		ELEMENTS = Collections.unmodifiableMap(ansiElements);
 	}
 
 	private static final Map<Integer, AnsiElement> LEVELS;
 
 	static {
-		Map<Integer, AnsiElement> levels = new HashMap<Integer, AnsiElement>();
-		levels.put(Level.FATAL.intLevel(), AnsiColor.RED);
-		levels.put(Level.ERROR.intLevel(), AnsiColor.RED);
-		levels.put(Level.WARN.intLevel(), AnsiColor.YELLOW);
-		LEVELS = Collections.unmodifiableMap(levels);
+		Map<Integer, AnsiElement> ansiLevels = new HashMap<Integer, AnsiElement>();
+		ansiLevels.put(Level.FATAL.intLevel(), AnsiColor.RED);
+		ansiLevels.put(Level.ERROR.intLevel(), AnsiColor.RED);
+		ansiLevels.put(Level.WARN.intLevel(), AnsiColor.YELLOW);
+		LEVELS = Collections.unmodifiableMap(ansiLevels);
 	}
 
 	private final List<PatternFormatter> formatters;
@@ -101,7 +101,7 @@ public final class ColorConverter extends LogEventPatternConverter {
 		}
 		PatternParser parser = PatternLayout.createPatternParser(config);
 		List<PatternFormatter> formatters = parser.parse(options[0]);
-		AnsiElement element = (options.length == 1 ? null : ELEMENTS.get(options[1]));
+		AnsiElement element = (options.length != 1) ? ELEMENTS.get(options[1]) : null;
 		return new ColorConverter(formatters, element);
 	}
 
@@ -126,7 +126,7 @@ public final class ColorConverter extends LogEventPatternConverter {
 			if (element == null) {
 				// Assume highlighting
 				element = LEVELS.get(event.getLevel().intLevel());
-				element = (element == null ? AnsiColor.GREEN : element);
+				element = (element != null) ? element : AnsiColor.GREEN;
 			}
 			appendAnsiString(toAppendTo, buf.toString(), element);
 		}

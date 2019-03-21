@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2016 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -114,12 +114,11 @@ public class EndpointAutoConfiguration {
 	@Bean
 	@ConditionalOnMissingBean
 	public HealthEndpoint healthEndpoint() {
-		return new HealthEndpoint(
-				this.healthAggregator == null ? new OrderedHealthAggregator()
-						: this.healthAggregator,
-				this.healthIndicators == null
-						? Collections.<String, HealthIndicator>emptyMap()
-						: this.healthIndicators);
+		HealthAggregator healthAggregator = (this.healthAggregator != null)
+				? this.healthAggregator : new OrderedHealthAggregator();
+		Map<String, HealthIndicator> healthIndicators = (this.healthIndicators != null)
+				? this.healthIndicators : Collections.<String, HealthIndicator>emptyMap();
+		return new HealthEndpoint(healthAggregator, healthIndicators);
 	}
 
 	@Bean
@@ -131,8 +130,8 @@ public class EndpointAutoConfiguration {
 	@Bean
 	@ConditionalOnMissingBean
 	public InfoEndpoint infoEndpoint() throws Exception {
-		return new InfoEndpoint(this.infoContributors == null
-				? Collections.<InfoContributor>emptyList() : this.infoContributors);
+		return new InfoEndpoint((this.infoContributors != null) ? this.infoContributors
+				: Collections.<InfoContributor>emptyList());
 	}
 
 	@Bean
@@ -156,8 +155,8 @@ public class EndpointAutoConfiguration {
 	@Bean
 	@ConditionalOnMissingBean
 	public TraceEndpoint traceEndpoint() {
-		return new TraceEndpoint(this.traceRepository == null
-				? new InMemoryTraceRepository() : this.traceRepository);
+		return new TraceEndpoint((this.traceRepository != null) ? this.traceRepository
+				: new InMemoryTraceRepository());
 	}
 
 	@Bean

@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,6 +16,7 @@
 
 package org.springframework.boot.context.embedded.jetty;
 
+import java.io.IOException;
 import java.net.BindException;
 import java.util.List;
 
@@ -104,7 +105,7 @@ public class JettyEmbeddedServletContainer implements EmbeddedServletContainer {
 				this.server.start();
 				this.server.setStopAtShutdown(false);
 			}
-			catch (Exception ex) {
+			catch (Throwable ex) {
 				// Ensure process isn't left running
 				stopSilently();
 				throw new EmbeddedServletContainerException(
@@ -142,8 +143,9 @@ public class JettyEmbeddedServletContainer implements EmbeddedServletContainer {
 					try {
 						connector.start();
 					}
-					catch (BindException ex) {
-						if (connector instanceof NetworkConnector) {
+					catch (IOException ex) {
+						if (connector instanceof NetworkConnector
+								&& findBindException(ex) != null) {
 							throw new PortInUseException(
 									((NetworkConnector) connector).getPort());
 						}
@@ -155,19 +157,31 @@ public class JettyEmbeddedServletContainer implements EmbeddedServletContainer {
 						.info("Jetty started on port(s) " + getActualPortsDescription());
 			}
 			catch (EmbeddedServletContainerException ex) {
+				stopSilently();
 				throw ex;
 			}
 			catch (Exception ex) {
+				stopSilently();
 				throw new EmbeddedServletContainerException(
 						"Unable to start embedded Jetty servlet container", ex);
 			}
 		}
 	}
 
+	private BindException findBindException(Throwable ex) {
+		if (ex == null) {
+			return null;
+		}
+		if (ex instanceof BindException) {
+			return (BindException) ex;
+		}
+		return findBindException(ex.getCause());
+	}
+
 	private String getActualPortsDescription() {
 		StringBuilder ports = new StringBuilder();
 		for (Connector connector : this.server.getConnectors()) {
-			ports.append(ports.length() == 0 ? "" : ", ");
+			ports.append((ports.length() != 0) ? ", " : "");
 			ports.append(getLocalPort(connector) + getProtocols(connector));
 		}
 		return ports.toString();

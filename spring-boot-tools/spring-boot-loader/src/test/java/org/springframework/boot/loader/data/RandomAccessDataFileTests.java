@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -106,7 +106,8 @@ public class RandomAccessDataFileTests {
 	@Test
 	public void fileExists() throws Exception {
 		this.thrown.expect(IllegalArgumentException.class);
-		this.thrown.expectMessage("File must exist");
+		this.thrown.expectMessage(String.format("File %s must exist",
+				new File("/does/not/exist").getAbsolutePath()));
 		new RandomAccessDataFile(new File("/does/not/exist"));
 	}
 
@@ -120,7 +121,8 @@ public class RandomAccessDataFileTests {
 	@Test
 	public void fileExistsWithConcurrentReads() throws Exception {
 		this.thrown.expect(IllegalArgumentException.class);
-		this.thrown.expectMessage("File must exist");
+		this.thrown.expectMessage(String.format("File %s must exist",
+				new File("/does/not/exist").getAbsolutePath()));
 		new RandomAccessDataFile(new File("/does/not/exist"), 1);
 	}
 

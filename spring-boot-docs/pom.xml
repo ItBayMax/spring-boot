@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-parent</artifactId>
-		<version>1.5.5.BUILD-SNAPSHOT</version>
+		<version>1.5.20.BUILD-SNAPSHOT</version>
 		<relativePath>../spring-boot-parent</relativePath>
 	</parent>
 	<artifactId>spring-boot-docs</artifactId>
 	<name>Spring Boot Docs</name>
 	<description>Spring Boot Docs</description>
-	<url>http://projects.spring.io/spring-boot/</url>
+	<url>https://projects.spring.io/spring-boot/</url>
 	<organization>
 		<name>Pivotal Software, Inc.</name>
-		<url>http://www.spring.io</url>
+		<url>https://www.spring.io</url>
 	</organization>
 	<properties>
 		<main.basedir>${basedir}/..</main.basedir>
@@ -742,6 +742,11 @@
 			<artifactId>spring-boot-test-support</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 	<build>
 		<plugins>
@@ -780,13 +785,13 @@
 									<quiet>true</quiet>
 									<stylesheetfile>${basedir}/src/main/javadoc/spring-javadoc.css</stylesheetfile>
 									<links>
-										<link>http://docs.oracle.com/javase/7/docs/api/</link>
-										<link>http://docs.oracle.com/javaee/7/api/</link>
-										<link>http://docs.spring.io/spring-framework/docs/${spring.version}/javadoc-api/</link>
-										<link>http://docs.spring.io/autorepo/docs/spring-security/${spring-security.version}/apidocs/</link>
-										<link>http://tomcat.apache.org/tomcat-8.0-doc/api/</link>
-										<link>http://download.eclipse.org/jetty/stable-9/apidocs/</link>
-										<link>http://www.thymeleaf.org/apidocs/thymeleaf/${thymeleaf.version}/</link>
+										<link>https://docs.oracle.com/javase/7/docs/api/</link>
+										<link>https://docs.oracle.com/javaee/7/api/</link>
+										<link>https://docs.spring.io/spring-framework/docs/${spring.version}/javadoc-api/</link>
+										<link>https://docs.spring.io/autorepo/docs/spring-security/${spring-security.version}/apidocs/</link>
+										<link>https://tomcat.apache.org/tomcat-8.0-doc/api/</link>
+										<link>https://www.eclipse.org/jetty/javadoc/${jetty.version}/</link>
+										<link>https://www.thymeleaf.org/apidocs/thymeleaf/${thymeleaf.version}/</link>
 									</links>
 								</configuration>
 							</execution>
@@ -1004,6 +1009,7 @@
 									<doctype>book</doctype>
 									<attributes>
 										<docinfo>true</docinfo>
+										<jooq-version>${jooq.version}</jooq-version>
 										<spring-version>${spring.version}</spring-version>
 										<spring-boot-version>${project.version}</spring-boot-version>
 										<spring-boot-docs-version>${project.version}</spring-boot-docs-version>

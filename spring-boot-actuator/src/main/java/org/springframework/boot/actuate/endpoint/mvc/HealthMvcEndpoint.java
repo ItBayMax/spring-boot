@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,6 +20,7 @@ import java.security.Principal;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
@@ -151,7 +152,7 @@ public class HealthMvcEndpoint extends AbstractEndpointMvcAdapter<HealthEndpoint
 	private HttpStatus getStatus(Health health) {
 		String code = health.getStatus().getCode();
 		if (code != null) {
-			code = code.toLowerCase().replace('_', '-');
+			code = code.toLowerCase(Locale.ENGLISH).replace('_', '-');
 			for (String candidate : RelaxedNames.forCamelCase(code)) {
 				HttpStatus status = this.statusMapping.get(candidate);
 				if (status != null) {
@@ -165,7 +166,7 @@ public class HealthMvcEndpoint extends AbstractEndpointMvcAdapter<HealthEndpoint
 	private Health getHealth(HttpServletRequest request, Principal principal) {
 		Health currentHealth = getCurrentHealth();
 		if (exposeHealthDetails(request, principal)) {
-			return this.cachedHealth.health;
+			return currentHealth;
 		}
 		return Health.status(currentHealth.getStatus()).build();
 	}

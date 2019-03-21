@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2016 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -166,8 +166,6 @@ public class NoSuchBeanDefinitionFailureAnalyzerTests {
 		assertThat(analysis.getDescription()).startsWith(String.format(
 				"Constructor in %s required a bean named '%s' that could not be found",
 				StringNameHandler.class.getName(), "test-string"));
-		assertThat(analysis.getDescription().contains(
-				"No matching auto-configuration has been found for this bean name."));
 		assertThat(analysis.getAction()).startsWith(String.format(
 				"Consider defining a bean named '%s' in your configuration.",
 				"test-string"));
@@ -196,15 +194,17 @@ public class NoSuchBeanDefinitionFailureAnalyzerTests {
 	}
 
 	private void assertActionMissingType(FailureAnalysis analysis, Class<?> type) {
-		assertThat(analysis.getAction()).startsWith(String
-				.format("Consider revisiting the conditions above or defining a bean of type '%s' "
-						+ "in your configuration.", type.getName()));
+		assertThat(analysis.getAction()).startsWith(String.format(
+				"Consider revisiting the conditions above or defining a bean of type '%s' "
+						+ "in your configuration.",
+				type.getName()));
 	}
 
 	private void assertActionMissingName(FailureAnalysis analysis, String name) {
-		assertThat(analysis.getAction()).startsWith(String
-				.format("Consider revisiting the conditions above or defining a bean named '%s' "
-						+ "in your configuration.", name));
+		assertThat(analysis.getAction()).startsWith(String.format(
+				"Consider revisiting the conditions above or defining a bean named '%s' "
+						+ "in your configuration.",
+				name));
 	}
 
 	private void assertBeanMethodDisabled(FailureAnalysis analysis, String description,

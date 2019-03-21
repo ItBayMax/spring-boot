@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,7 +20,7 @@ import java.io.File;
 import java.net.URL;
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -62,18 +62,10 @@ public class LocalDevToolsAutoConfiguration {
 	@ConditionalOnProperty(prefix = "spring.devtools.livereload", name = "enabled", matchIfMissing = true)
 	static class LiveReloadConfiguration {
 
-		@Autowired
-		private DevToolsProperties properties;
-
-		@Autowired(required = false)
 		private LiveReloadServer liveReloadServer;
 
-		@Bean
-		@RestartScope
-		@ConditionalOnMissingBean
-		public LiveReloadServer liveReloadServer() {
-			return new LiveReloadServer(this.properties.getLivereload().getPort(),
-					Restarter.getInstance().getThreadFactory());
+		LiveReloadConfiguration(ObjectProvider<LiveReloadServer> liveReloadServer) {
+			this.liveReloadServer = liveReloadServer.getIfAvailable();
 		}
 
 		@EventListener
@@ -93,16 +85,33 @@ public class LocalDevToolsAutoConfiguration {
 			return new OptionalLiveReloadServer(this.liveReloadServer);
 		}
 
+		@Configuration
+		static class LiveReloadServerConfiguration {
+
+			@Bean
+			@RestartScope
+			@ConditionalOnMissingBean
+			public LiveReloadServer liveReloadServer(DevToolsProperties properties) {
+				return new LiveReloadServer(properties.getLivereload().getPort(),
+						Restarter.getInstance().getThreadFactory());
+			}
+
+		}
+
 	}
 
 	/**
 	 * Local Restart Configuration.
 	 */
+	@Configuration
 	@ConditionalOnProperty(prefix = "spring.devtools.restart", name = "enabled", matchIfMissing = true)
 	static class RestartConfiguration {
 
-		@Autowired
-		private DevToolsProperties properties;
+		private final DevToolsProperties properties;
+
+		RestartConfiguration(DevToolsProperties properties) {
+			this.properties = properties;
+		}
 
 		@EventListener
 		public void onClassPathChanged(ClassPathChangedEvent event) {

@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -49,7 +49,7 @@ import org.springframework.core.annotation.AliasFor;
 public @interface AutoConfigureRestDocs {
 
 	/**
-	 * The output directory to which generated snippets will be written. A alias for
+	 * The output directory to which generated snippets will be written. An alias for
 	 * {@link #outputDir}.
 	 * @return the output directory
 	 */
@@ -57,7 +57,7 @@ public @interface AutoConfigureRestDocs {
 	String value() default "";
 
 	/**
-	 * The output directory to which generated snippets will be written. A alias for
+	 * The output directory to which generated snippets will be written. An alias for
 	 * {@link #value}.
 	 * @return the output directory
 	 */

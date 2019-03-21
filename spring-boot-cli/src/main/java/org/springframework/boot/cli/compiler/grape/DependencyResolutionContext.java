@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2016 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -67,7 +67,7 @@ public class DependencyResolutionContext {
 			dependency = this.managedDependencyByGroupAndArtifact
 					.get(getIdentifier(groupId, artifactId));
 		}
-		return dependency != null ? dependency.getArtifact().getVersion() : null;
+		return (dependency != null) ? dependency.getArtifact().getVersion() : null;
 	}
 
 	public List<Dependency> getManagedDependencies() {
@@ -104,10 +104,10 @@ public class DependencyResolutionContext {
 			this.managedDependencyByGroupAndArtifact.put(getIdentifier(aetherDependency),
 					aetherDependency);
 		}
-		this.dependencyManagement = this.dependencyManagement == null
-				? dependencyManagement
-				: new CompositeDependencyManagement(dependencyManagement,
-						this.dependencyManagement);
+		this.dependencyManagement = (this.dependencyManagement != null)
+				? new CompositeDependencyManagement(dependencyManagement,
+						this.dependencyManagement)
+				: dependencyManagement;
 		this.artifactCoordinatesResolver = new DependencyManagementArtifactCoordinatesResolver(
 				this.dependencyManagement);
 	}

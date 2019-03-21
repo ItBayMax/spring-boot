@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -89,9 +89,8 @@ public class EndpointWebMvcManagementContextConfiguration {
 		this.corsProperties = corsProperties;
 		List<EndpointHandlerMappingCustomizer> providedCustomizers = mappingCustomizers
 				.getIfAvailable();
-		this.mappingCustomizers = providedCustomizers == null
-				? Collections.<EndpointHandlerMappingCustomizer>emptyList()
-				: providedCustomizers;
+		this.mappingCustomizers = (providedCustomizers != null) ? providedCustomizers
+				: Collections.<EndpointHandlerMappingCustomizer>emptyList();
 	}
 
 	@Bean
@@ -143,6 +142,7 @@ public class EndpointWebMvcManagementContextConfiguration {
 	}
 
 	@Bean
+	@ConditionalOnMissingBean
 	@ConditionalOnBean(EnvironmentEndpoint.class)
 	@ConditionalOnEnabledEndpoint("env")
 	public EnvironmentMvcEndpoint environmentMvcEndpoint(EnvironmentEndpoint delegate) {
@@ -173,6 +173,7 @@ public class EndpointWebMvcManagementContextConfiguration {
 	}
 
 	@Bean
+	@ConditionalOnMissingBean
 	@ConditionalOnBean(LoggersEndpoint.class)
 	@ConditionalOnEnabledEndpoint("loggers")
 	public LoggersMvcEndpoint loggersMvcEndpoint(LoggersEndpoint delegate) {
@@ -180,6 +181,7 @@ public class EndpointWebMvcManagementContextConfiguration {
 	}
 
 	@Bean
+	@ConditionalOnMissingBean
 	@ConditionalOnBean(MetricsEndpoint.class)
 	@ConditionalOnEnabledEndpoint("metrics")
 	public MetricsMvcEndpoint metricsMvcEndpoint(MetricsEndpoint delegate) {
@@ -187,6 +189,7 @@ public class EndpointWebMvcManagementContextConfiguration {
 	}
 
 	@Bean
+	@ConditionalOnMissingBean
 	@ConditionalOnEnabledEndpoint("logfile")
 	@Conditional(LogFileCondition.class)
 	public LogFileMvcEndpoint logfileMvcEndpoint() {
@@ -194,6 +197,7 @@ public class EndpointWebMvcManagementContextConfiguration {
 	}
 
 	@Bean
+	@ConditionalOnMissingBean
 	@ConditionalOnBean(ShutdownEndpoint.class)
 	@ConditionalOnEnabledEndpoint(value = "shutdown", enabledByDefault = false)
 	public ShutdownMvcEndpoint shutdownMvcEndpoint(ShutdownEndpoint delegate) {
@@ -201,6 +205,7 @@ public class EndpointWebMvcManagementContextConfiguration {
 	}
 
 	@Bean
+	@ConditionalOnMissingBean
 	@ConditionalOnBean(AuditEventRepository.class)
 	@ConditionalOnEnabledEndpoint("auditevents")
 	public AuditEventsMvcEndpoint auditEventMvcEndpoint(

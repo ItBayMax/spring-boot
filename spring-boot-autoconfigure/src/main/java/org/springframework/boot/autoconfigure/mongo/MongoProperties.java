@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -159,7 +159,7 @@ public class MongoProperties {
 	}
 
 	public String determineUri() {
-		return (this.uri != null ? this.uri : DEFAULT_URI);
+		return (this.uri != null) ? this.uri : DEFAULT_URI;
 	}
 
 	public void setUri(String uri) {
@@ -226,7 +226,7 @@ public class MongoProperties {
 		if (options == null) {
 			options = MongoClientOptions.builder().build();
 		}
-		String host = this.host == null ? "localhost" : this.host;
+		String host = (this.host != null) ? this.host : "localhost";
 		return new MongoClient(Collections.singletonList(new ServerAddress(host, port)),
 				Collections.<MongoCredential>emptyList(), options);
 	}
@@ -242,13 +242,13 @@ public class MongoProperties {
 			}
 			List<MongoCredential> credentials = new ArrayList<MongoCredential>();
 			if (hasCustomCredentials()) {
-				String database = this.authenticationDatabase == null
-						? getMongoClientDatabase() : this.authenticationDatabase;
+				String database = (this.authenticationDatabase != null)
+						? this.authenticationDatabase : getMongoClientDatabase();
 				credentials.add(MongoCredential.createCredential(this.username, database,
 						this.password));
 			}
-			String host = this.host == null ? "localhost" : this.host;
-			int port = this.port != null ? this.port : DEFAULT_PORT;
+			String host = (this.host != null) ? this.host : "localhost";
+			int port = (this.port != null) ? this.port : DEFAULT_PORT;
 			return new MongoClient(
 					Collections.singletonList(new ServerAddress(host, port)), credentials,
 					options);

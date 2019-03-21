@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2015 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,6 +15,8 @@
  */
 
 package org.springframework.boot.ansi;
+
+import java.util.Locale;
 
 import org.springframework.util.Assert;
 
@@ -35,7 +37,7 @@ public abstract class AnsiOutput {
 	private static Boolean ansiCapable;
 
 	private static final String OPERATING_SYSTEM_NAME = System.getProperty("os.name")
-			.toLowerCase();
+			.toLowerCase(Locale.ENGLISH);
 
 	private static final String ENCODE_START = "\033[";
 

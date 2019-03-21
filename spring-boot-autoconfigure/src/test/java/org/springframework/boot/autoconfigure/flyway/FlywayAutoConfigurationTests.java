@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -153,7 +153,7 @@ public class FlywayAutoConfigurationTests {
 	@Test
 	public void changeLogDoesNotExist() throws Exception {
 		EnvironmentTestUtils.addEnvironment(this.context,
-				"flyway.locations:file:no-such-dir");
+				"flyway.locations:filesystem:no-such-dir");
 		this.thrown.expect(BeanCreationException.class);
 		registerAndRefresh(EmbeddedDataSourceConfiguration.class,
 				FlywayAutoConfiguration.class,
@@ -176,6 +176,26 @@ public class FlywayAutoConfigurationTests {
 	public void checkLocationsAllExist() throws Exception {
 		EnvironmentTestUtils.addEnvironment(this.context,
 				"flyway.locations:classpath:db/changelog,classpath:db/migration",
+				"flyway.check-location:true");
+		registerAndRefresh(EmbeddedDataSourceConfiguration.class,
+				FlywayAutoConfiguration.class,
+				PropertyPlaceholderAutoConfiguration.class);
+	}
+
+	@Test
+	public void checkLocationsAllExistWithImplicitClasspathPrefix() throws Exception {
+		EnvironmentTestUtils.addEnvironment(this.context,
+				"flyway.locations:db/changelog,db/migration",
+				"flyway.check-location:true");
+		registerAndRefresh(EmbeddedDataSourceConfiguration.class,
+				FlywayAutoConfiguration.class,
+				PropertyPlaceholderAutoConfiguration.class);
+	}
+
+	@Test
+	public void checkLocationsAllExistWithImplicitFilesystemPrefix() {
+		EnvironmentTestUtils.addEnvironment(this.context,
+				"flyway.locations:filesystem:src/test/resources/db/migration",
 				"flyway.check-location:true");
 		registerAndRefresh(EmbeddedDataSourceConfiguration.class,
 				FlywayAutoConfiguration.class,

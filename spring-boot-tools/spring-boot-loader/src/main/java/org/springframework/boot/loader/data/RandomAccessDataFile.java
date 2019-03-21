@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -64,7 +64,8 @@ public class RandomAccessDataFile implements RandomAccessData {
 			throw new IllegalArgumentException("File must not be null");
 		}
 		if (!file.exists()) {
-			throw new IllegalArgumentException("File must exist");
+			throw new IllegalArgumentException(
+					String.format("File %s must exist", file.getAbsolutePath()));
 		}
 		this.file = file;
 		this.filePool = new FilePool(file, concurrentReads);
@@ -141,7 +142,7 @@ public class RandomAccessDataFile implements RandomAccessData {
 
 		@Override
 		public int read(byte[] b) throws IOException {
-			return read(b, 0, b == null ? 0 : b.length);
+			return read(b, 0, (b != null) ? b.length : 0);
 		}
 
 		@Override
@@ -177,7 +178,7 @@ public class RandomAccessDataFile implements RandomAccessData {
 				}
 				if (b == null) {
 					int rtn = file.read();
-					moveOn(rtn == -1 ? 0 : 1);
+					moveOn((rtn != -1) ? 1 : 0);
 					return rtn;
 				}
 				else {
@@ -193,7 +194,7 @@ public class RandomAccessDataFile implements RandomAccessData {
 
 		@Override
 		public long skip(long n) throws IOException {
-			return (n <= 0 ? 0 : moveOn(cap(n)));
+			return (n <= 0) ? 0 : moveOn(cap(n));
 		}
 
 		@Override

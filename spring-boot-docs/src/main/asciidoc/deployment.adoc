@@ -202,8 +202,8 @@ This should be everything you need. The most common workflow for Heroku deployme
 	-----> Executing: mvn -B -DskipTests=true clean install
 
 	       [INFO] Scanning for projects...
-	       Downloading: http://repo.spring.io/...
-	       Downloaded: http://repo.spring.io/... (818 B at 1.8 KB/sec)
+	       Downloading: https://repo.spring.io/...
+	       Downloaded: https://repo.spring.io/... (818 B at 1.8 KB/sec)
 			....
 	       Downloaded: http://s3pository.heroku.com/jvm/... (152 KB at 595.3 KB/sec)
 	       [INFO] Installing /tmp/build_0c35a5d2-a067-4abc-a232-14b1fb7a8229/target/...
@@ -340,7 +340,7 @@ the actual application, running on port 5000. To configure it, add the following
 ===== Best practices
 
 ====== Uploading binaries instead of sources
-By default Elastic Beanstalk uploads sources and compile them in AWS. To upload the
+By default Elastic Beanstalk uploads sources and compiles them in AWS. To upload the
 binaries instead, add the following to your `.elasticbeanstalk/config.yml` file:
 
 
@@ -368,7 +368,7 @@ command:
 
 
 ==== Summary
-This is one of the easiest way to get to AWS, but there are more things
+This is one of the easiest ways to get to AWS, but there are more things
 to cover, e.g.: how to integrate Elastic Beanstalk into any CI / CD tool, using the
 Elastic Beanstalk maven plugin instead of the CLI, etc. There is a
 https://exampledriven.wordpress.com/2017/01/09/spring-boot-aws-elastic-beanstalk-example/[blog]
@@ -451,7 +451,7 @@ then use the https://cloud.google.com/sdk/downloads[Google Cloud SDK] to push yo
 Spring Boot app into that slot from the command line or CI build.
 
 App Engine needs you to create an `app.yaml` file to describe the resources your app
-requires. Normally you put this in `src/min/appengine`, and it looks something like this:
+requires. Normally you put this in `src/main/appengine`, and it looks something like this:
 
 [source,yaml,indent=0]
 ----
@@ -503,7 +503,7 @@ Spring Application there without some modifications. See the
 
 [[deployment-install]]
 == Installing Spring Boot applications
-In additional to running Spring Boot applications using `java -jar` it is also possible
+In addition to running Spring Boot applications using `java -jar` it is also possible
 to make fully executable applications for Unix systems. A fully executable jar can be
 executed like any other executable binary or it can be <<deployment-service,registered
 with `init.d` or `systemd`>>. This makes it very easy to install and manage Spring Boot

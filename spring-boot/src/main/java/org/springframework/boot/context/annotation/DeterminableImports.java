@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -29,7 +29,7 @@ import org.springframework.core.type.AnnotationMetadata;
  * {@link ImportBeanDefinitionRegistrar} implementations when they can determine imports
  * early. The {@link ImportSelector} and {@link ImportBeanDefinitionRegistrar} interfaces
  * are quite flexible which can make it hard to tell exactly what bean definitions they
- * will add. This interface should be used when an implementation consistently result in
+ * will add. This interface should be used when an implementation consistently results in
  * the same imports, given the same source.
  * <p>
  * Using {@link DeterminableImports} is particularly useful when working with Spring's

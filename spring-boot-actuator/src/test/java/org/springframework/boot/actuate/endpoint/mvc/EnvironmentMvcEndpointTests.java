@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -147,12 +147,35 @@ public class EnvironmentMvcEndpointTests {
 		map.put("my.foo", "${my.bar}");
 		((ConfigurableEnvironment) this.context.getEnvironment()).getPropertySources()
 				.addFirst(new MapPropertySource("unresolved-placeholder", map));
-		this.mvc.perform(get("/env/my.*")).andExpect(status().isOk())
+		this.mvc.perform(get("/env/my.foo")).andExpect(status().isOk())
 				.andExpect(content().string(containsString("\"my.foo\":\"${my.bar}\"")));
 	}
 
 	@Test
 	public void nestedPathWithSensitivePlaceholderShouldSanitize() throws Exception {
+		Map<String, Object> map = new HashMap<String, Object>();
+		map.put("my.foo", "${my.password}");
+		map.put("my.password", "hello");
+		((ConfigurableEnvironment) this.context.getEnvironment()).getPropertySources()
+				.addFirst(new MapPropertySource("placeholder", map));
+		this.mvc.perform(get("/env/my.foo")).andExpect(status().isOk())
+				.andExpect(content().string(containsString("\"my.foo\":\"******\"")));
+	}
+
+	@Test
+	public void nestedPathMatchedByRegexWhenPlaceholderCannotBeResolvedShouldReturnUnresolvedProperty()
+			throws Exception {
+		Map<String, Object> map = new HashMap<String, Object>();
+		map.put("my.foo", "${my.bar}");
+		((ConfigurableEnvironment) this.context.getEnvironment()).getPropertySources()
+				.addFirst(new MapPropertySource("unresolved-placeholder", map));
+		this.mvc.perform(get("/env/my.*")).andExpect(status().isOk())
+				.andExpect(content().string(containsString("\"my.foo\":\"${my.bar}\"")));
+	}
+
+	@Test
+	public void nestedPathMatchedByRegexWithSensitivePlaceholderShouldSanitize()
+			throws Exception {
 		Map<String, Object> map = new HashMap<String, Object>();
 		map.put("my.foo", "${my.password}");
 		map.put("my.password", "hello");

@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,8 +18,10 @@ package org.springframework.boot.context.embedded.undertow;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.SocketException;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
+import java.security.NoSuchProviderException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
@@ -29,7 +31,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 import javax.net.ssl.KeyManager;
-import javax.net.ssl.SSLHandshakeException;
+import javax.net.ssl.SSLException;
 
 import io.undertow.Undertow.Builder;
 import io.undertow.servlet.api.DeploymentInfo;
@@ -51,6 +53,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.CoreMatchers.anyOf;
+import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.junit.Assert.fail;
 import static org.mockito.Matchers.anyObject;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
@@ -191,6 +196,41 @@ public class UndertowEmbeddedServletContainerFactoryTests
 		testAccessLog("my_access.", "logz", "my_access.logz");
 	}
 
+	@Test
+	public void sslKeyStoreProvider() {
+		AbstractEmbeddedServletContainerFactory factory = getFactory();
+		Ssl ssl = getSsl(null, "password", "classpath:test.jks");
+		ssl.setKeyStoreProvider("com.example.KeyStoreProvider");
+		factory.setSsl(ssl);
+		try {
+			factory.getEmbeddedServletContainer();
+			fail();
+		}
+		catch (Exception ex) {
+			Throwable cause = ex.getCause();
+			assertThat(cause).isInstanceOf(NoSuchProviderException.class);
+			assertThat(cause).hasMessageContaining("com.example.KeyStoreProvider");
+		}
+	}
+
+	@Test
+	public void sslTrustStoreProvider() {
+		AbstractEmbeddedServletContainerFactory factory = getFactory();
+		Ssl ssl = getSsl(null, null, null);
+		ssl.setTrustStore("classpath:test.jks");
+		ssl.setTrustStoreProvider("com.example.TrustStoreProvider");
+		factory.setSsl(ssl);
+		try {
+			factory.getEmbeddedServletContainer();
+			fail();
+		}
+		catch (Exception ex) {
+			Throwable cause = ex.getCause();
+			assertThat(cause).isInstanceOf(NoSuchProviderException.class);
+			assertThat(cause).hasMessageContaining("com.example.TrustStoreProvider");
+		}
+	}
+
 	private void testAccessLog(String prefix, String suffix, String expectedFile)
 			throws IOException, URISyntaxException, InterruptedException {
 		UndertowEmbeddedServletContainerFactory factory = getFactory();
@@ -222,14 +262,18 @@ public class UndertowEmbeddedServletContainerFactoryTests
 				});
 	}
 
-	@Test(expected = SSLHandshakeException.class)
+	@Test
 	public void sslRestrictedProtocolsEmptyCipherFailure() throws Exception {
+		this.thrown.expect(
+				anyOf(instanceOf(SSLException.class), instanceOf(SocketException.class)));
 		testRestrictedSSLProtocolsAndCipherSuites(new String[] { "TLSv1.2" },
 				new String[] { "TLS_EMPTY_RENEGOTIATION_INFO_SCSV" });
 	}
 
-	@Test(expected = SSLHandshakeException.class)
+	@Test
 	public void sslRestrictedProtocolsECDHETLS1Failure() throws Exception {
+		this.thrown.expect(
+				anyOf(instanceOf(SSLException.class), instanceOf(SocketException.class)));
 		testRestrictedSSLProtocolsAndCipherSuites(new String[] { "TLSv1" },
 				new String[] { "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256" });
 	}
@@ -246,8 +290,10 @@ public class UndertowEmbeddedServletContainerFactoryTests
 				new String[] { "TLS_RSA_WITH_AES_128_CBC_SHA256" });
 	}
 
-	@Test(expected = SSLHandshakeException.class)
+	@Test
 	public void sslRestrictedProtocolsRSATLS11Failure() throws Exception {
+		this.thrown.expect(
+				anyOf(instanceOf(SSLException.class), instanceOf(SocketException.class)));
 		testRestrictedSSLProtocolsAndCipherSuites(new String[] { "TLSv1.1" },
 				new String[] { "TLS_RSA_WITH_AES_128_CBC_SHA256" });
 	}
@@ -318,6 +364,9 @@ public class UndertowEmbeddedServletContainerFactoryTests
 			int blockedPort) {
 		assertThat(ex).isInstanceOf(PortInUseException.class);
 		assertThat(((PortInUseException) ex).getPort()).isEqualTo(blockedPort);
+		Object undertow = ReflectionTestUtils.getField(this.container, "undertow");
+		Object worker = ReflectionTestUtils.getField(undertow, "worker");
+		assertThat(worker).isNull();
 	}
 
 }

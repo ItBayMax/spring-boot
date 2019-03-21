@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,8 +17,10 @@
 package org.springframework.boot.context.embedded.jetty;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.nio.charset.Charset;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -27,6 +29,8 @@ import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
 import javax.servlet.ServletContext;
+import javax.servlet.ServletContextEvent;
+import javax.servlet.ServletContextListener;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
@@ -35,6 +39,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.jasper.servlet.JspServlet;
+import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
@@ -112,6 +117,19 @@ public class JettyEmbeddedServletContainerFactoryTests
 		for (JettyServerCustomizer configuration : configurations) {
 			ordered.verify(configuration).customize((Server) anyObject());
 		}
+	}
+
+	@Test
+	public void specificIPAddressNotReverseResolved() throws Exception {
+		JettyEmbeddedServletContainerFactory factory = getFactory();
+		InetAddress localhost = InetAddress.getLocalHost();
+		factory.setAddress(InetAddress.getByAddress(localhost.getAddress()));
+		this.container = factory.getEmbeddedServletContainer();
+		this.container.start();
+		Connector connector = ((JettyEmbeddedServletContainer) this.container).getServer()
+				.getConnectors()[0];
+		assertThat(((ServerConnector) connector).getHost())
+				.isEqualTo(localhost.getHostAddress());
 	}
 
 	@Test
@@ -229,6 +247,27 @@ public class JettyEmbeddedServletContainerFactoryTests
 				.isEqualTo(new String[] { "TLSv1.1" });
 	}
 
+	@Test
+	public void sslEnabledSpecificIPAddress() throws Exception {
+		Ssl ssl = new Ssl();
+		ssl.setKeyStore("src/test/resources/test.jks");
+		ssl.setKeyStorePassword("secret");
+		ssl.setKeyPassword("password");
+
+		JettyEmbeddedServletContainerFactory factory = getFactory();
+		factory.setSsl(ssl);
+		factory.setAddress(
+				InetAddress.getByAddress(InetAddress.getLocalHost().getAddress()));
+
+		this.container = factory.getEmbeddedServletContainer();
+		this.container.start();
+
+		JettyEmbeddedServletContainer jettyContainer = (JettyEmbeddedServletContainer) this.container;
+		ServerConnector connector = (ServerConnector) jettyContainer.getServer()
+				.getConnectors()[0];
+		assertThat(connector.getHost()).isEqualTo(factory.getAddress().getHostAddress());
+	}
+
 	private void assertTimeout(JettyEmbeddedServletContainerFactory factory,
 			int expected) {
 		this.container = factory.getEmbeddedServletContainer();
@@ -321,7 +360,52 @@ public class JettyEmbeddedServletContainerFactoryTests
 
 		});
 		this.thrown.expect(EmbeddedServletContainerException.class);
-		factory.getEmbeddedServletContainer().start();
+		JettyEmbeddedServletContainer jettyContainer = (JettyEmbeddedServletContainer) factory
+				.getEmbeddedServletContainer();
+		try {
+			jettyContainer.start();
+		}
+		finally {
+			QueuedThreadPool threadPool = (QueuedThreadPool) jettyContainer.getServer()
+					.getThreadPool();
+			assertThat(threadPool.isRunning()).isFalse();
+		}
+	}
+
+	@Test
+	public void faultyListenerCausesStartFailure() throws Exception {
+		JettyEmbeddedServletContainerFactory factory = getFactory();
+		factory.addServerCustomizers(new JettyServerCustomizer() {
+
+			@Override
+			public void customize(Server server) {
+				Collection<WebAppContext> contexts = server.getBeans(WebAppContext.class);
+				contexts.iterator().next().addEventListener(new ServletContextListener() {
+
+					@Override
+					public void contextInitialized(ServletContextEvent event) {
+						throw new RuntimeException();
+					}
+
+					@Override
+					public void contextDestroyed(ServletContextEvent event) {
+					}
+
+				});
+			}
+
+		});
+		this.thrown.expect(EmbeddedServletContainerException.class);
+		JettyEmbeddedServletContainer jettyContainer = (JettyEmbeddedServletContainer) factory
+				.getEmbeddedServletContainer();
+		try {
+			jettyContainer.start();
+		}
+		finally {
+			QueuedThreadPool threadPool = (QueuedThreadPool) jettyContainer.getServer()
+					.getThreadPool();
+			assertThat(threadPool.isRunning()).isFalse();
+		}
 	}
 
 	@Test
@@ -382,6 +466,7 @@ public class JettyEmbeddedServletContainerFactoryTests
 			return null;
 		}
 		holder.start();
+		holder.initialize();
 		return (JspServlet) holder.getServlet();
 	}
 

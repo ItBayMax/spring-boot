@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -223,7 +223,7 @@ public class RepackageMojo extends AbstractDependencyFilterMojo {
 	}
 
 	private File getTargetFile() {
-		String classifier = (this.classifier == null ? "" : this.classifier.trim());
+		String classifier = (this.classifier != null) ? this.classifier.trim() : "";
 		if (classifier.length() > 0 && !classifier.startsWith("-")) {
 			classifier = "-" + classifier;
 		}
@@ -288,7 +288,7 @@ public class RepackageMojo extends AbstractDependencyFilterMojo {
 	}
 
 	private String removeLineBreaks(String description) {
-		return (description == null ? null : description.replaceAll("\\s+", " "));
+		return (description != null) ? description.replaceAll("\\s+", " ") : null;
 	}
 
 	private void putIfMissing(Properties properties, String key,
@@ -355,7 +355,8 @@ public class RepackageMojo extends AbstractDependencyFilterMojo {
 		 * Module Layout.
 		 * @deprecated as of 1.5 in favor of a custom {@link LayoutFactory}
 		 */
-		@Deprecated MODULE(new Layouts.Module()),
+		@Deprecated
+		MODULE(new Layouts.Module()),
 
 		/**
 		 * No Layout.

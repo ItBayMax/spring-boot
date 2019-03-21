@@ -1,25 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-deployment-tests</artifactId>
-		<version>1.5.5.BUILD-SNAPSHOT</version>
+		<version>1.5.20.BUILD-SNAPSHOT</version>
 	</parent>
 	<artifactId>spring-boot-deployment-test-wlp</artifactId>
 	<packaging>war</packaging>
 	<name>Spring Boot WebSphere Liberty Profile Deployment Test</name>
 	<description>Spring Boot WebSphere Liberty Profile Deployment Test</description>
-	<url>http://projects.spring.io/spring-boot/</url>
+	<url>https://projects.spring.io/spring-boot/</url>
 	<organization>
 		<name>Pivotal Software, Inc.</name>
-		<url>http://www.spring.io</url>
+		<url>https://www.spring.io</url>
 	</organization>
 	<properties>
 		<main.basedir>${basedir}/../..</main.basedir>
 		<wlp.version>16.0.0.4</wlp.version>
 		<cargo.container.id>liberty</cargo.container.id>
-		<cargo.container.url>http://central.maven.org/maven2/com/ibm/websphere/appserver/runtime/wlp-webProfile7/${wlp.version}/wlp-webProfile7-${wlp.version}.zip</cargo.container.url>
+		<cargo.container.url>https://repo.maven.apache.org/maven2/com/ibm/websphere/appserver/runtime/wlp-webProfile7/${wlp.version}/wlp-webProfile7-${wlp.version}.zip</cargo.container.url>
 	</properties>
 	<dependencies>
 		<dependency>

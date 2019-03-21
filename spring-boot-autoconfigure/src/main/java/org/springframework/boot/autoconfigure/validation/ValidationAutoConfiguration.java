@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -29,6 +29,7 @@ import org.springframework.boot.validation.MessageInterpolatorFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Role;
 import org.springframework.core.env.Environment;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
@@ -60,7 +61,7 @@ public class ValidationAutoConfiguration {
 	@Bean
 	@ConditionalOnMissingBean
 	public static MethodValidationPostProcessor methodValidationPostProcessor(
-			Environment environment, Validator validator) {
+			Environment environment, @Lazy Validator validator) {
 		MethodValidationPostProcessor processor = new MethodValidationPostProcessor();
 		processor.setProxyTargetClass(determineProxyTargetClass(environment));
 		processor.setValidator(validator);
@@ -71,7 +72,7 @@ public class ValidationAutoConfiguration {
 		RelaxedPropertyResolver resolver = new RelaxedPropertyResolver(environment,
 				"spring.aop.");
 		Boolean value = resolver.getProperty("proxyTargetClass", Boolean.class);
-		return (value != null ? value : true);
+		return (value != null) ? value : true;
 	}
 
 }

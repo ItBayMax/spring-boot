@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -75,9 +75,10 @@ public class ChangeableUrlsTests {
 	@Test
 	public void urlsFromJarClassPathAreConsidered() throws Exception {
 		File relative = this.temporaryFolder.newFolder();
+		URL absoluteUrl = this.temporaryFolder.newFolder().toURI().toURL();
 		File jarWithClassPath = makeJarFileWithUrlsInManifestClassPath(
 				"project-core/target/classes/", "project-web/target/classes/",
-				"does-not-exist/target/classes", relative.getName() + "/");
+				"does-not-exist/target/classes", relative.getName() + "/", absoluteUrl);
 		new File(jarWithClassPath.getParentFile(), "project-core/target/classes")
 				.mkdirs();
 		new File(jarWithClassPath.getParentFile(), "project-web/target/classes").mkdirs();
@@ -87,7 +88,7 @@ public class ChangeableUrlsTests {
 		assertThat(urls.toList()).containsExactly(
 				new URL(jarWithClassPath.toURI().toURL(), "project-core/target/classes/"),
 				new URL(jarWithClassPath.toURI().toURL(), "project-web/target/classes/"),
-				relative.toURI().toURL());
+				relative.toURI().toURL(), absoluteUrl);
 	}
 
 	private URL makeUrl(String name) throws IOException {

@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -23,6 +23,7 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -183,9 +184,9 @@ class JsonReader {
 	private Deprecation.Level parseDeprecationLevel(String value) {
 		if (value != null) {
 			try {
-				return Deprecation.Level.valueOf(value.toUpperCase());
+				return Deprecation.Level.valueOf(value.toUpperCase(Locale.ENGLISH));
 			}
-			catch (IllegalArgumentException e) {
+			catch (IllegalArgumentException ex) {
 				// let's use the default
 			}
 		}
@@ -209,7 +210,7 @@ class JsonReader {
 			StringBuilder out = new StringBuilder();
 			InputStreamReader reader = new InputStreamReader(in, charset);
 			char[] buffer = new char[BUFFER_SIZE];
-			int bytesRead = -1;
+			int bytesRead;
 			while ((bytesRead = reader.read(buffer)) != -1) {
 				out.append(buffer, 0, bytesRead);
 			}

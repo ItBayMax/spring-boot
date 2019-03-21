@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2016 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 
 /**
  * {@link URLStreamHandler} for Spring Boot loader {@link JarFile}s.
@@ -47,6 +48,12 @@ public class Handler extends URLStreamHandler {
 	private static final String FILE_PROTOCOL = "file:";
 
 	private static final String SEPARATOR = "!/";
+
+	private static final String CURRENT_DIR = "/./";
+
+	private static final Pattern CURRENT_DIR_PATTERN = Pattern.compile(CURRENT_DIR);
+
+	private static final String PARENT_DIR = "/../";
 
 	private static final String[] FALLBACK_HANDLERS = {
 			"sun.net.www.protocol.jar.Handler" };
@@ -71,8 +78,6 @@ public class Handler extends URLStreamHandler {
 		rootFileCache = new SoftReference<Map<File, JarFile>>(null);
 	}
 
-	private final Logger logger = Logger.getLogger(getClass().getName());
-
 	private final JarFile jarFile;
 
 	private URLStreamHandler fallbackHandler;
@@ -87,7 +92,8 @@ public class Handler extends URLStreamHandler {
 
 	@Override
 	protected URLConnection openConnection(URL url) throws IOException {
-		if (this.jarFile != null) {
+		if (this.jarFile != null
+				&& url.toString().startsWith(this.jarFile.getUrl().toString())) {
 			return JarURLConnection.get(url, this.jarFile);
 		}
 		try {
@@ -105,14 +111,26 @@ public class Handler extends URLStreamHandler {
 		}
 		catch (Exception ex) {
 			if (reason instanceof IOException) {
-				this.logger.log(Level.FINEST, "Unable to open fallback handler", ex);
+				log(false, "Unable to open fallback handler", ex);
 				throw (IOException) reason;
 			}
-			this.logger.log(Level.WARNING, "Unable to open fallback handler", ex);
+			log(true, "Unable to open fallback handler", ex);
 			if (reason instanceof RuntimeException) {
 				throw (RuntimeException) reason;
 			}
 			throw new IllegalStateException(reason);
+		}
+	}
+
+	private void log(boolean warning, String message, Exception cause) {
+		try {
+			Logger.getLogger(getClass().getName())
+					.log((warning ? Level.WARNING : Level.FINEST), message, cause);
+		}
+		catch (Exception ex) {
+			if (warning) {
+				System.err.println("WARNING: " + message);
+			}
 		}
 	}
 
@@ -145,7 +163,7 @@ public class Handler extends URLStreamHandler {
 
 	@Override
 	protected void parseURL(URL context, String spec, int start, int limit) {
-		if (spec.toLowerCase().startsWith(JAR_PROTOCOL)) {
+		if (spec.regionMatches(true, 0, JAR_PROTOCOL, 0, JAR_PROTOCOL.length())) {
 			setFile(context, getFileFromSpec(spec.substring(start, limit)));
 		}
 		else {
@@ -193,7 +211,45 @@ public class Handler extends URLStreamHandler {
 	}
 
 	private void setFile(URL context, String file) {
-		setURL(context, JAR_PROTOCOL, null, -1, null, null, file, null, null);
+		String path = normalize(file);
+		String query = null;
+		int queryIndex = path.lastIndexOf('?');
+		if (queryIndex != -1) {
+			query = path.substring(queryIndex + 1);
+			path = path.substring(0, queryIndex);
+		}
+		setURL(context, JAR_PROTOCOL, null, -1, null, null, path, query,
+				context.getRef());
+	}
+
+	private String normalize(String file) {
+		if (!file.contains(CURRENT_DIR) && !file.contains(PARENT_DIR)) {
+			return file;
+		}
+		int afterLastSeparatorIndex = file.lastIndexOf(SEPARATOR) + SEPARATOR.length();
+		String afterSeparator = file.substring(afterLastSeparatorIndex);
+		afterSeparator = replaceParentDir(afterSeparator);
+		afterSeparator = replaceCurrentDir(afterSeparator);
+		return file.substring(0, afterLastSeparatorIndex) + afterSeparator;
+	}
+
+	private String replaceParentDir(String file) {
+		int parentDirIndex;
+		while ((parentDirIndex = file.indexOf(PARENT_DIR)) >= 0) {
+			int precedingSlashIndex = file.lastIndexOf('/', parentDirIndex - 1);
+			if (precedingSlashIndex >= 0) {
+				file = file.substring(0, precedingSlashIndex)
+						+ file.substring(parentDirIndex + 3);
+			}
+			else {
+				file = file.substring(parentDirIndex + 4);
+			}
+		}
+		return file;
+	}
+
+	private String replaceCurrentDir(String file) {
+		return CURRENT_DIR_PATTERN.matcher(file).replaceAll("/");
 	}
 
 	@Override
@@ -202,7 +258,7 @@ public class Handler extends URLStreamHandler {
 	}
 
 	private int hashCode(String protocol, String file) {
-		int result = (protocol == null ? 0 : protocol.hashCode());
+		int result = (protocol != null) ? protocol.hashCode() : 0;
 		int separatorIndex = file.indexOf(SEPARATOR);
 		if (separatorIndex == -1) {
 			return result + file.hashCode();
@@ -271,7 +327,7 @@ public class Handler extends URLStreamHandler {
 			String path = name.substring(FILE_PROTOCOL.length());
 			File file = new File(URLDecoder.decode(path, "UTF-8"));
 			Map<File, JarFile> cache = rootFileCache.get();
-			JarFile result = (cache == null ? null : cache.get(file));
+			JarFile result = (cache != null) ? cache.get(file) : null;
 			if (result == null) {
 				result = new JarFile(file);
 				addToRootFileCache(file, result);

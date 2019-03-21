@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -23,6 +23,7 @@ import java.util.Arrays;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
@@ -53,6 +54,8 @@ import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.InOrder;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 import org.springframework.boot.context.embedded.AbstractEmbeddedServletContainerFactory;
 import org.springframework.boot.context.embedded.AbstractEmbeddedServletContainerFactoryTests;
@@ -66,6 +69,7 @@ import org.springframework.util.SocketUtils;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.willAnswer;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyObject;
 import static org.mockito.Mockito.inOrder;
@@ -144,6 +148,25 @@ public class TomcatEmbeddedServletContainerFactoryTests
 		for (TomcatContextCustomizer listener : listeners) {
 			ordered.verify(listener).customize((Context) anyObject());
 		}
+	}
+
+	@Test
+	public void contextIsAddedToHostBeforeCustomizersAreCalled() throws Exception {
+		TomcatEmbeddedServletContainerFactory factory = getFactory();
+		TomcatContextCustomizer customizer = mock(TomcatContextCustomizer.class);
+		willAnswer(new Answer<Void>() {
+
+			@Override
+			public Void answer(InvocationOnMock invocation) throws Throwable {
+				assertThat(((Context) invocation.getArguments()[0]).getParent())
+						.isNotNull();
+				return null;
+			}
+
+		}).given(customizer).customize(any(Context.class));
+		factory.addContextCustomizers(customizer);
+		this.container = factory.getEmbeddedServletContainer();
+		verify(customizer).customize(any(Context.class));
 	}
 
 	@Test
@@ -469,7 +492,18 @@ public class TomcatEmbeddedServletContainerFactoryTests
 
 	@Test
 	public void faultyFilterCausesStartFailure() throws Exception {
-		AbstractEmbeddedServletContainerFactory factory = getFactory();
+		final AtomicReference<Tomcat> tomcatReference = new AtomicReference<Tomcat>();
+		TomcatEmbeddedServletContainerFactory factory = new TomcatEmbeddedServletContainerFactory(
+				0) {
+
+			@Override
+			protected TomcatEmbeddedServletContainer getTomcatEmbeddedServletContainer(
+					Tomcat tomcat) {
+				tomcatReference.set(tomcat);
+				return super.getTomcatEmbeddedServletContainer(tomcat);
+			}
+
+		};
 		factory.addInitializers(new ServletContextInitializer() {
 
 			@Override
@@ -496,7 +530,13 @@ public class TomcatEmbeddedServletContainerFactoryTests
 
 		});
 		this.thrown.expect(EmbeddedServletContainerException.class);
-		factory.getEmbeddedServletContainer().start();
+		try {
+			factory.getEmbeddedServletContainer();
+		}
+		finally {
+			assertThat(tomcatReference.get().getServer().getState())
+					.isEqualTo(LifecycleState.STOPPED);
+		}
 	}
 
 	@Override

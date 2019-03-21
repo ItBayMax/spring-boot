@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -119,7 +119,7 @@ public class ExtendedGroovyClassLoader extends GroovyClassLoader {
 		InputStream resourceStream = super.getResourceAsStream(name);
 		if (resourceStream == null) {
 			byte[] bytes = this.classResources.get(name);
-			resourceStream = bytes == null ? null : new ByteArrayInputStream(bytes);
+			resourceStream = (bytes != null) ? new ByteArrayInputStream(bytes) : null;
 		}
 		return resourceStream;
 	}
@@ -186,7 +186,7 @@ public class ExtendedGroovyClassLoader extends GroovyClassLoader {
 			Set<URL> urls = new HashSet<URL>();
 			findGroovyJarsDirectly(parent, urls);
 			if (urls.isEmpty()) {
-				findGroovyJarsFromClassPath(parent, urls);
+				findGroovyJarsFromClassPath(urls);
 			}
 			Assert.state(!urls.isEmpty(), "Unable to find groovy JAR");
 			return new ArrayList<URL>(urls).toArray(new URL[urls.size()]);
@@ -205,7 +205,7 @@ public class ExtendedGroovyClassLoader extends GroovyClassLoader {
 			}
 		}
 
-		private void findGroovyJarsFromClassPath(ClassLoader parent, Set<URL> urls) {
+		private void findGroovyJarsFromClassPath(Set<URL> urls) {
 			String classpath = System.getProperty("java.class.path");
 			String[] entries = classpath.split(System.getProperty("path.separator"));
 			for (String entry : entries) {

@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2016 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.logging.Log;
@@ -163,7 +164,7 @@ public class ApplicationPidFileWriter
 
 	private boolean failOnWriteError(SpringApplicationEvent event) {
 		String value = getProperty(event, FAIL_ON_WRITE_ERROR_PROPERTIES);
-		return (value == null ? false : Boolean.parseBoolean(value));
+		return (value != null) ? Boolean.parseBoolean(value) : false;
 	}
 
 	private String getProperty(SpringApplicationEvent event, List<Property> candidates) {
@@ -250,7 +251,8 @@ public class ApplicationPidFileWriter
 		private final String[] properties;
 
 		SystemProperty(String name) {
-			this.properties = new String[] { name.toUpperCase(), name.toLowerCase() };
+			this.properties = new String[] { name.toUpperCase(Locale.ENGLISH),
+					name.toLowerCase(Locale.ENGLISH) };
 		}
 
 		@Override

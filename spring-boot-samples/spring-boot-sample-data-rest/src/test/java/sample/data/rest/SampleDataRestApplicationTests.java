@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2016 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -68,8 +68,8 @@ public class SampleDataRestApplicationTests {
 	@Test
 	public void findByNameAndCountry() throws Exception {
 
-		this.mvc.perform(
-				get("/api/cities/search/findByNameAndCountryAllIgnoringCase?name=Melbourne&country=Australia"))
+		this.mvc.perform(get(
+				"/api/cities/search/findByNameAndCountryAllIgnoringCase?name=Melbourne&country=Australia"))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("state", equalTo("Victoria")))
 				.andExpect(jsonPath("name", equalTo("Melbourne")));
@@ -78,9 +78,10 @@ public class SampleDataRestApplicationTests {
 	@Test
 	public void findByContaining() throws Exception {
 
-		this.mvc.perform(
-				get("/api/cities/search/findByNameContainingAndCountryContainingAllIgnoringCase?name=&country=UK"))
+		this.mvc.perform(get(
+				"/api/cities/search/findByNameContainingAndCountryContainingAllIgnoringCase?name=&country=UK"))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("_embedded.cities", hasSize(3)));
 	}
+
 }

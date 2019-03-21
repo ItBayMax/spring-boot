@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,13 +20,16 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Properties;
 import java.util.Set;
 import java.util.jar.Manifest;
@@ -206,21 +209,24 @@ public class PropertiesLauncher extends Launcher {
 		if (config.startsWith("classpath:")) {
 			return getClasspathResource(config.substring("classpath:".length()));
 		}
-		config = stripFileUrlPrefix(config);
+		config = handleUrl(config);
 		if (isUrl(config)) {
 			return getURLResource(config);
 		}
 		return getFileResource(config);
 	}
 
-	private String stripFileUrlPrefix(String config) {
-		if (config.startsWith("file:")) {
-			config = config.substring("file:".length());
-			if (config.startsWith("//")) {
-				config = config.substring(2);
+	private String handleUrl(String path) throws UnsupportedEncodingException {
+		if (path.startsWith("jar:file:") || path.startsWith("file:")) {
+			path = URLDecoder.decode(path, "UTF-8");
+			if (path.startsWith("file:")) {
+				path = path.substring("file:".length());
+				if (path.startsWith("//")) {
+					path = path.substring(2);
+				}
 			}
 		}
-		return config;
+		return path;
 	}
 
 	private boolean isUrl(String config) {
@@ -432,8 +438,9 @@ public class PropertiesLauncher extends Launcher {
 				return SystemPropertyUtils.resolvePlaceholders(this.properties, value);
 			}
 		}
-		return defaultValue == null ? defaultValue
-				: SystemPropertyUtils.resolvePlaceholders(this.properties, defaultValue);
+		return (defaultValue != null)
+				? SystemPropertyUtils.resolvePlaceholders(this.properties, defaultValue)
+				: defaultValue;
 	}
 
 	@Override
@@ -457,7 +464,7 @@ public class PropertiesLauncher extends Launcher {
 	}
 
 	private List<Archive> getClassPathArchives(String path) throws Exception {
-		String root = cleanupPath(stripFileUrlPrefix(path));
+		String root = cleanupPath(handleUrl(path));
 		List<Archive> lib = new ArrayList<Archive>();
 		File file = new File(root);
 		if (!"/".equals(root)) {
@@ -489,7 +496,7 @@ public class PropertiesLauncher extends Launcher {
 	}
 
 	private Archive getArchive(File file) throws IOException {
-		String name = file.getName().toLowerCase();
+		String name = file.getName().toLowerCase(Locale.ENGLISH);
 		if (name.endsWith(".jar") || name.endsWith(".zip")) {
 			return new JarFileArchive(file);
 		}
@@ -566,7 +573,8 @@ public class PropertiesLauncher extends Launcher {
 		if (path.startsWith("./")) {
 			path = path.substring(2);
 		}
-		if (path.toLowerCase().endsWith(".jar") || path.toLowerCase().endsWith(".zip")) {
+		String lowercasePath = path.toLowerCase(Locale.ENGLISH);
+		if (lowercasePath.endsWith(".jar") || lowercasePath.endsWith(".zip")) {
 			return path;
 		}
 		if (path.endsWith("/*")) {

@@ -731,13 +731,12 @@ an optional dependency, for example with Maven you would add:
 	</dependency>
 ----
 
-With Gradle, you can use the https://github.com/spring-gradle-plugins/propdeps-plugin[propdeps-plugin]
-and specify:
+With Gradle you would add:
 
 [source,groovy,indent=0,subs="verbatim,quotes,attributes"]
 ----
 	dependencies {
-		optional "org.springframework.boot:spring-boot-configuration-processor"
+		compileOnly "org.springframework.boot:spring-boot-configuration-processor"
 	}
 
 	compileJava.dependsOn(processResources)
@@ -797,7 +796,7 @@ For example, the following class:
 
 		// ... getter and setters
 
-		private static class Host {
+		public static class Host {
 
 			private String ip;
 
@@ -815,6 +814,8 @@ Will produce meta-data information for `server.name`, `server.host.ip` and
 annotation on a field to indicate that a regular (non-inner) class should be treated as
 if it were nested.
 
+TIP: This has no effect on collections and maps as those types are automatically
+identified and a single meta-data property is generated for each of them.
 
 
 [[configuration-metadata-additional-metadata]]

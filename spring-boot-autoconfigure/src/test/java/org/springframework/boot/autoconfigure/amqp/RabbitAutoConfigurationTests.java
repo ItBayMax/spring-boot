@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,8 +18,11 @@ package org.springframework.boot.autoconfigure.amqp;
 
 import javax.net.SocketFactory;
 import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
 
 import com.rabbitmq.client.Address;
+import com.rabbitmq.client.NullTrustManager;
+import com.rabbitmq.client.TrustEverythingTrustManager;
 import org.aopalliance.aop.Advice;
 import org.junit.After;
 import org.junit.Rule;
@@ -53,6 +56,7 @@ import org.springframework.retry.backoff.ExponentialBackOffPolicy;
 import org.springframework.retry.interceptor.MethodInvocationRecoverer;
 import org.springframework.retry.policy.SimpleRetryPolicy;
 import org.springframework.retry.support.RetryTemplate;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -62,8 +66,6 @@ import static org.mockito.Mockito.verify;
  * Tests for {@link RabbitAutoConfiguration}.
  *
  * @author Greg Turnquist
- * @author Stephane Nicoll
- * @author Gary Russell
  * @author Stephane Nicoll
  */
 public class RabbitAutoConfigurationTests {
@@ -411,6 +413,8 @@ public class RabbitAutoConfigurationTests {
 		com.rabbitmq.client.ConnectionFactory rabbitConnectionFactory = getTargetConnectionFactory();
 		assertThat(rabbitConnectionFactory.getSocketFactory())
 				.as("SocketFactory must use SSL").isInstanceOf(SSLSocketFactory.class);
+		TrustManager trustManager = getTrustManager(rabbitConnectionFactory);
+		assertThat(trustManager).isNotInstanceOf(NullTrustManager.class);
 	}
 
 	@Test
@@ -422,10 +426,41 @@ public class RabbitAutoConfigurationTests {
 				"spring.rabbitmq.ssl.keyStore=foo",
 				"spring.rabbitmq.ssl.keyStorePassword=secret",
 				"spring.rabbitmq.ssl.trustStore=bar",
-				"spring.rabbitmq.ssl.trustStorePassword=secret");
+				"spring.rabbitmq.ssl.trustStorePassword=secret",
+				"spring.rabbitmq.ssl.validateServerCertificate=false");
+		getTargetConnectionFactory();
 	}
 
-	private com.rabbitmq.client.ConnectionFactory getTargetConnectionFactory() {
+	@Test
+	public void enableSslWithValidateServerCertificateFalse() throws Exception {
+		load(TestConfiguration.class, "spring.rabbitmq.ssl.enabled:true",
+				"spring.rabbitmq.ssl.validateServerCertificate=false");
+		com.rabbitmq.client.ConnectionFactory rabbitConnectionFactory = getTargetConnectionFactory();
+		TrustManager trustManager = getTrustManager(rabbitConnectionFactory);
+		assertThat(trustManager).isInstanceOf(TrustEverythingTrustManager.class);
+	}
+
+	@Test
+	public void enableSslWithValidateServerCertificateDefault() throws Exception {
+		load(TestConfiguration.class, "spring.rabbitmq.ssl.enabled:true");
+		com.rabbitmq.client.ConnectionFactory rabbitConnectionFactory = getTargetConnectionFactory();
+		TrustManager trustManager = getTrustManager(rabbitConnectionFactory);
+		assertThat(trustManager).isNotInstanceOf(NullTrustManager.class);
+	}
+
+	protected TrustManager getTrustManager(
+			com.rabbitmq.client.ConnectionFactory rabbitConnectionFactory) {
+		Object sslContext = ReflectionTestUtils.getField(rabbitConnectionFactory,
+				"sslContext");
+		Object spi = ReflectionTestUtils.getField(sslContext, "contextSpi");
+		Object trustManager = ReflectionTestUtils.getField(spi, "trustManager");
+		while (trustManager.getClass().getName().endsWith("Wrapper")) {
+			trustManager = ReflectionTestUtils.getField(trustManager, "tm");
+		}
+		return (TrustManager) trustManager;
+	}
+
+	protected com.rabbitmq.client.ConnectionFactory getTargetConnectionFactory() {
 		CachingConnectionFactory connectionFactory = this.context
 				.getBean(CachingConnectionFactory.class);
 		return (com.rabbitmq.client.ConnectionFactory) new DirectFieldAccessor(
@@ -439,7 +474,7 @@ public class RabbitAutoConfigurationTests {
 		return expression.getValue();
 	}
 
-	private void load(Class<?> config, String... environment) {
+	protected void load(Class<?> config, String... environment) {
 		load(new Class<?>[] { config }, environment);
 	}
 

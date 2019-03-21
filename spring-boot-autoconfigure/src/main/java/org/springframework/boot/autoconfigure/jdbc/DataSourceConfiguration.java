@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -26,6 +26,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.jdbc.DatabaseDriver;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
 /**
  * Actual DataSource configurations imported by {@link DataSourceAutoConfiguration}.
@@ -37,7 +38,7 @@ import org.springframework.context.annotation.Bean;
 abstract class DataSourceConfiguration {
 
 	@SuppressWarnings("unchecked")
-	protected <T> T createDataSource(DataSourceProperties properties,
+	protected static <T> T createDataSource(DataSourceProperties properties,
 			Class<? extends DataSource> type) {
 		return (T) properties.initializeDataSourceBuilder().type(type).build();
 	}
@@ -45,9 +46,11 @@ abstract class DataSourceConfiguration {
 	/**
 	 * Tomcat Pool DataSource configuration.
 	 */
+	@Configuration
 	@ConditionalOnClass(org.apache.tomcat.jdbc.pool.DataSource.class)
+	@ConditionalOnMissingBean(DataSource.class)
 	@ConditionalOnProperty(name = "spring.datasource.type", havingValue = "org.apache.tomcat.jdbc.pool.DataSource", matchIfMissing = true)
-	static class Tomcat extends DataSourceConfiguration {
+	static class Tomcat {
 
 		@Bean
 		@ConfigurationProperties(prefix = "spring.datasource.tomcat")
@@ -70,9 +73,11 @@ abstract class DataSourceConfiguration {
 	/**
 	 * Hikari DataSource configuration.
 	 */
+	@Configuration
 	@ConditionalOnClass(HikariDataSource.class)
+	@ConditionalOnMissingBean(DataSource.class)
 	@ConditionalOnProperty(name = "spring.datasource.type", havingValue = "com.zaxxer.hikari.HikariDataSource", matchIfMissing = true)
-	static class Hikari extends DataSourceConfiguration {
+	static class Hikari {
 
 		@Bean
 		@ConfigurationProperties(prefix = "spring.datasource.hikari")
@@ -87,10 +92,12 @@ abstract class DataSourceConfiguration {
 	 *
 	 * @deprecated as of 1.5 in favor of DBCP2
 	 */
+	@Configuration
 	@ConditionalOnClass(org.apache.commons.dbcp.BasicDataSource.class)
+	@ConditionalOnMissingBean(DataSource.class)
 	@ConditionalOnProperty(name = "spring.datasource.type", havingValue = "org.apache.commons.dbcp.BasicDataSource", matchIfMissing = true)
 	@Deprecated
-	static class Dbcp extends DataSourceConfiguration {
+	static class Dbcp {
 
 		@Bean
 		@ConfigurationProperties(prefix = "spring.datasource.dbcp")
@@ -113,9 +120,11 @@ abstract class DataSourceConfiguration {
 	/**
 	 * DBCP DataSource configuration.
 	 */
+	@Configuration
 	@ConditionalOnClass(org.apache.commons.dbcp2.BasicDataSource.class)
+	@ConditionalOnMissingBean(DataSource.class)
 	@ConditionalOnProperty(name = "spring.datasource.type", havingValue = "org.apache.commons.dbcp2.BasicDataSource", matchIfMissing = true)
-	static class Dbcp2 extends DataSourceConfiguration {
+	static class Dbcp2 {
 
 		@Bean
 		@ConfigurationProperties(prefix = "spring.datasource.dbcp2")
@@ -130,6 +139,7 @@ abstract class DataSourceConfiguration {
 	/**
 	 * Generic DataSource configuration.
 	 */
+	@Configuration
 	@ConditionalOnMissingBean(DataSource.class)
 	@ConditionalOnProperty(name = "spring.datasource.type")
 	static class Generic {

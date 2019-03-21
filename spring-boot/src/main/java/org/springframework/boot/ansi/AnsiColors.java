@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2016 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -94,7 +94,7 @@ public final class AnsiColors {
 		private final double b;
 
 		LabColor(Integer rgb) {
-			this(rgb == null ? (Color) null : new Color(rgb));
+			this((rgb != null) ? new Color(rgb) : (Color) null);
 		}
 
 		LabColor(Color color) {
@@ -117,7 +117,7 @@ public final class AnsiColors {
 		}
 
 		private double f(double t) {
-			return (t > (216.0 / 24389.0) ? Math.cbrt(t)
+			return ((t > (216.0 / 24389.0)) ? Math.cbrt(t)
 					: (1.0 / 3.0) * Math.pow(29.0 / 6.0, 2) * t + (4.0 / 29.0));
 		}
 

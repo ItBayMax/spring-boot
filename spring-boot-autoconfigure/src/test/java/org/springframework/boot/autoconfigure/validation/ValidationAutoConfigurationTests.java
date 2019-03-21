@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,6 +15,9 @@
  */
 
 package org.springframework.boot.autoconfigure.validation;
+
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.validation.ConstraintViolationException;
 import javax.validation.Validator;
@@ -27,12 +30,15 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 import org.springframework.beans.DirectFieldAccessor;
+import org.springframework.beans.factory.config.BeanPostProcessor;
+import org.springframework.boot.autoconfigure.validation.ValidationAutoConfigurationTests.CustomValidatorConfiguration.TestBeanPostProcessor;
 import org.springframework.boot.test.util.EnvironmentTestUtils;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.validation.beanvalidation.CustomValidatorBean;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 import org.springframework.validation.beanvalidation.MethodValidationPostProcessor;
 import org.springframework.validation.beanvalidation.OptionalValidatorFactoryBean;
@@ -198,6 +204,13 @@ public class ValidationAutoConfigurationTests {
 						.getPropertyValue("validator"));
 	}
 
+	@Test
+	public void methodValidationPostProcessorValidatorDependencyDoesNotTriggerEarlyInitialization() {
+		load(CustomValidatorConfiguration.class);
+		assertThat(this.context.getBean(TestBeanPostProcessor.class).postProcessed)
+				.contains("someService");
+	}
+
 	private boolean isPrimaryBean(String beanName) {
 		return this.context.getBeanDefinition(beanName).isPrimary();
 	}
@@ -291,6 +304,7 @@ public class ValidationAutoConfigurationTests {
 	interface AnotherSampleService {
 
 		void doSomething(@Min(42) Integer counter);
+
 	}
 
 	@Validated
@@ -300,6 +314,7 @@ public class ValidationAutoConfigurationTests {
 		public void doSomething(Integer counter) {
 
 		}
+
 	}
 
 	@Configuration
@@ -318,6 +333,56 @@ public class ValidationAutoConfigurationTests {
 		@Bean
 		public MethodValidationPostProcessor testMethodValidationPostProcessor() {
 			return new MethodValidationPostProcessor();
+		}
+
+	}
+
+	@org.springframework.context.annotation.Configuration
+	static class CustomValidatorConfiguration {
+
+		CustomValidatorConfiguration(SomeService someService) {
+
+		}
+
+		@Bean
+		Validator customValidator() {
+			return new CustomValidatorBean();
+		}
+
+		@Bean
+		static TestBeanPostProcessor testBeanPostProcessor() {
+			return new TestBeanPostProcessor();
+		}
+
+		@Configuration
+		static class SomeServiceConfiguration {
+
+			@Bean
+			public SomeService someService() {
+				return new SomeService();
+			}
+
+		}
+
+		static class SomeService {
+
+		}
+
+		static class TestBeanPostProcessor implements BeanPostProcessor {
+
+			private Set<String> postProcessed = new HashSet<String>();
+
+			@Override
+			public Object postProcessAfterInitialization(Object bean, String name) {
+				this.postProcessed.add(name);
+				return bean;
+			}
+
+			@Override
+			public Object postProcessBeforeInitialization(Object bean, String name) {
+				return bean;
+			}
+
 		}
 
 	}

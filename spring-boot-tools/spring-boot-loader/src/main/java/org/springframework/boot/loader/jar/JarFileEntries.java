@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2016 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -119,6 +119,10 @@ class JarFileEntries implements CentralDirectoryVisitor, Iterable<JarEntry> {
 		for (int i = 0; i < this.size; i++) {
 			this.positions[positions[i]] = i;
 		}
+	}
+
+	int getSize() {
+		return this.size;
 	}
 
 	private void sort(int left, int right) {
@@ -242,10 +246,10 @@ class JarFileEntries implements CentralDirectoryVisitor, Iterable<JarEntry> {
 			boolean cacheEntry) {
 		try {
 			FileHeader cached = this.entriesCache.get(index);
-			FileHeader entry = (cached != null ? cached
+			FileHeader entry = (cached != null) ? cached
 					: CentralDirectoryFileHeader.fromRandomAccessData(
 							this.centralDirectoryData,
-							this.centralDirectoryOffsets[index], this.filter));
+							this.centralDirectoryOffsets[index], this.filter);
 			if (CentralDirectoryFileHeader.class.equals(entry.getClass())
 					&& type.equals(JarEntry.class)) {
 				entry = new JarEntry(this.jarFile, (CentralDirectoryFileHeader) entry);
@@ -276,7 +280,7 @@ class JarFileEntries implements CentralDirectoryVisitor, Iterable<JarEntry> {
 	}
 
 	private AsciiBytes applyFilter(AsciiBytes name) {
-		return (this.filter == null ? name : this.filter.apply(name));
+		return (this.filter != null) ? this.filter.apply(name) : name;
 	}
 
 	/**

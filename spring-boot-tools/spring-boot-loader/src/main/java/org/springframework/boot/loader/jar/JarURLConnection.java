@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -36,6 +36,7 @@ import org.springframework.boot.loader.data.RandomAccessData.ResourceAccess;
  *
  * @author Phillip Webb
  * @author Andy Wilkinson
+ * @author Rostyslav Dudka
  */
 final class JarURLConnection extends java.net.JarURLConnection {
 
@@ -204,7 +205,7 @@ final class JarURLConnection extends java.net.JarURLConnection {
 				return this.jarFile.size();
 			}
 			JarEntry entry = getJarEntry();
-			return (entry == null ? -1 : (int) entry.getSize());
+			return (entry != null) ? (int) entry.getSize() : -1;
 		}
 		catch (IOException ex) {
 			return -1;
@@ -219,7 +220,7 @@ final class JarURLConnection extends java.net.JarURLConnection {
 
 	@Override
 	public String getContentType() {
-		return (this.jarEntryName == null ? null : this.jarEntryName.getContentType());
+		return (this.jarEntryName != null) ? this.jarEntryName.getContentType() : null;
 	}
 
 	@Override
@@ -234,22 +235,40 @@ final class JarURLConnection extends java.net.JarURLConnection {
 		return this.permission;
 	}
 
+	@Override
+	public long getLastModified() {
+		if (this.jarFile == null || this.jarEntryName.isEmpty()) {
+			return 0;
+		}
+		try {
+			JarEntry entry = getJarEntry();
+			return (entry != null) ? entry.getTime() : 0;
+		}
+		catch (IOException ex) {
+			return 0;
+		}
+	}
+
 	static void setUseFastExceptions(boolean useFastExceptions) {
 		JarURLConnection.useFastExceptions.set(useFastExceptions);
 	}
 
 	static JarURLConnection get(URL url, JarFile jarFile) throws IOException {
 		String spec = extractFullSpec(url, jarFile.getPathFromRoot());
+		if (spec == null) {
+			return (Boolean.TRUE.equals(useFastExceptions.get()) ? NOT_FOUND_CONNECTION
+					: new JarURLConnection(url, null, EMPTY_JAR_ENTRY_NAME));
+		}
 		int separator;
 		int index = 0;
 		while ((separator = spec.indexOf(SEPARATOR, index)) > 0) {
-			String entryName = spec.substring(index, separator);
-			JarEntry jarEntry = jarFile.getJarEntry(entryName);
+			JarEntryName entryName = JarEntryName.get(spec.substring(index, separator));
+			JarEntry jarEntry = jarFile.getJarEntry(entryName.toString());
 			if (jarEntry == null) {
-				return JarURLConnection.notFound(jarFile, JarEntryName.get(entryName));
+				return JarURLConnection.notFound(jarFile, entryName);
 			}
 			jarFile = jarFile.getNestedJarFile(jarEntry);
-			index += separator + SEPARATOR.length();
+			index = separator + SEPARATOR.length();
 		}
 		JarEntryName jarEntryName = JarEntryName.get(spec, index);
 		if (Boolean.TRUE.equals(useFastExceptions.get())) {
@@ -264,8 +283,8 @@ final class JarURLConnection extends java.net.JarURLConnection {
 	private static String extractFullSpec(URL url, String pathFromRoot) {
 		String file = url.getFile();
 		int separatorIndex = file.indexOf(SEPARATOR);
-		if (separatorIndex < 0) {
-			return "";
+		if (separatorIndex < 0 || !file.startsWith(pathFromRoot, separatorIndex)) {
+			return null;
 		}
 		int specIndex = separatorIndex + SEPARATOR.length() + pathFromRoot.length();
 		return file.substring(specIndex);
@@ -369,8 +388,8 @@ final class JarURLConnection extends java.net.JarURLConnection {
 		private String deduceContentType() {
 			// Guess the content type, don't bother with streams as mark is not supported
 			String type = (isEmpty() ? "x-java/jar" : null);
-			type = (type != null ? type : guessContentTypeFromName(toString()));
-			type = (type != null ? type : "content/unknown");
+			type = (type != null) ? type : guessContentTypeFromName(toString());
+			type = (type != null) ? type : "content/unknown";
 			return type;
 		}
 

@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2016 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -56,6 +56,7 @@ public class HelloWebSecurityApplicationTests {
 
 	@Test
 	public void requiresAuthentication() throws Exception {
+		this.request.setMethod("GET");
 		this.springSecurityFilterChain.doFilter(this.request, this.response, this.chain);
 		assertThat(this.response.getStatus())
 				.isEqualTo(HttpServletResponse.SC_UNAUTHORIZED);
@@ -63,6 +64,7 @@ public class HelloWebSecurityApplicationTests {
 
 	@Test
 	public void userAuthenticates() throws Exception {
+		this.request.setMethod("GET");
 		this.request.addHeader("Authorization",
 				"Basic " + new String(Base64.encode("user:password".getBytes("UTF-8"))));
 

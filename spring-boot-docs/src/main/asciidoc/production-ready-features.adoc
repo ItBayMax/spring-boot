@@ -307,7 +307,7 @@ of 1000 milliseconds.
 ==== Auto-configured HealthIndicators
 The following `HealthIndicators` are auto-configured by Spring Boot when appropriate:
 
-[cols="1,4"]
+[cols="4,6"]
 |===
 |Name |Description
 
@@ -397,7 +397,7 @@ to your application properties:
 The HTTP status code in the response reflects the overall health status (e.g. `UP`
 maps to 200, `OUT_OF_SERVICE` or `DOWN` to 503). You might also want to register custom
 status mappings with the `HealthMvcEndpoint` if you access the health endpoint over HTTP.
-For example, the following maps `FATAL` to `HttpStatus.SERVICE_UNAVAILABLE`:
+For example, the following maps `FATAL` to 503 (service unavailable):
 
 [source,properties,indent=0]
 ----
@@ -635,6 +635,10 @@ your application might already use `/info` for another purpose. You can use the
 
 The `application.properties` example above will change the endpoint from `/{id}` to
 `/manage/{id}` (e.g. `/manage/info`).
+
+NOTE: Unless the management port has been configured to
+<<production-ready-customizing-management-server-port,expose endpoints using a different
+HTTP port>>, `management.context-path` is relative to `server.context-path`.
 
 You can also change the "`id`" of an endpoint (using `endpoints.{name}.id`) which then
 changes the default resource path for the MVC endpoint. Legal endpoint ids are composed
@@ -888,7 +892,7 @@ using Maven you would add the following:
 	<dependency>
 		<groupId>org.jolokia</groupId>
 		<artifactId>jolokia-core</artifactId>
- 	</dependency>
+	</dependency>
 ----
 
 Jolokia can then be accessed using `/jolokia` on your management HTTP server.

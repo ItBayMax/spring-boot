@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -22,6 +22,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.bind.RelaxedPropertyResolver;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import org.springframework.dao.annotation.PersistenceExceptionTranslationPostProcessor;
 
@@ -33,6 +34,7 @@ import org.springframework.dao.annotation.PersistenceExceptionTranslationPostPro
  * @author Stephane Nicoll
  * @since 1.2.0
  */
+@Configuration
 @ConditionalOnClass(PersistenceExceptionTranslationPostProcessor.class)
 public class PersistenceExceptionTranslationAutoConfiguration {
 
@@ -50,7 +52,7 @@ public class PersistenceExceptionTranslationAutoConfiguration {
 		RelaxedPropertyResolver resolver = new RelaxedPropertyResolver(environment,
 				"spring.aop.");
 		Boolean value = resolver.getProperty("proxyTargetClass", Boolean.class);
-		return (value != null ? value : true);
+		return (value != null) ? value : true;
 	}
 
 }

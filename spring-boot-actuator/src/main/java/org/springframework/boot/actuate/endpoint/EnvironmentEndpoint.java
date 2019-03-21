@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -69,7 +69,10 @@ public class EnvironmentEndpoint extends AbstractEndpoint<Map<String, Object>> {
 				EnumerablePropertySource<?> enumerable = (EnumerablePropertySource<?>) source;
 				Map<String, Object> properties = new LinkedHashMap<String, Object>();
 				for (String name : enumerable.getPropertyNames()) {
-					Object resolved = resolver.getProperty(name, Object.class);
+					Object resolved = source.getProperty(name);
+					if (resolved instanceof String) {
+						resolved = resolver.resolvePlaceholders((String) resolved);
+					}
 					properties.put(name, sanitize(name, resolved));
 				}
 				properties = postProcessSourceProperties(sourceName, properties);

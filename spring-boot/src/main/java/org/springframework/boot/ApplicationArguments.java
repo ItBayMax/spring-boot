@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -34,7 +34,7 @@ public interface ApplicationArguments {
 	String[] getSourceArgs();
 
 	/**
-	 * Return then names of all option arguments. For example, if the arguments were
+	 * Return the names of all option arguments. For example, if the arguments were
 	 * "--foo=bar --debug" would return the values {@code ["foo", "debug"]}.
 	 * @return the option names or an empty set
 	 */

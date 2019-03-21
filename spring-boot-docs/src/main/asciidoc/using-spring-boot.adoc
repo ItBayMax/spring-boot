@@ -216,8 +216,8 @@ Maven, there is no "`super parent`" to import to share some configuration.
 ----
 	repositories {
 ifeval::["{spring-boot-repo}" != "release"]
-		maven { url "http://repo.spring.io/snapshot" }
-		maven { url "http://repo.spring.io/milestone" }
+		maven { url "https://repo.spring.io/snapshot" }
+		maven { url "https://repo.spring.io/milestone" }
 endif::[]
 ifeval::["{spring-boot-repo}" == "release"]
 		jcenter()
@@ -248,8 +248,8 @@ ifeval::["{spring-boot-repo}" != "release"]
 	buildscript {
 		repositories {
 			jcenter()
-			maven { url 'http://repo.spring.io/snapshot' }
-			maven { url 'http://repo.spring.io/milestone' }
+			maven { url 'https://repo.spring.io/snapshot' }
+			maven { url 'https://repo.spring.io/milestone' }
 		}
 		dependencies {
 			classpath 'org.springframework.boot:spring-boot-gradle-plugin:{spring-boot-version}'
@@ -263,8 +263,8 @@ endif::[]
 	repositories {
 		jcenter()
 ifeval::["{spring-boot-repo}" != "release"]
-		maven { url 'http://repo.spring.io/snapshot' }
-		maven { url 'http://repo.spring.io/milestone' }
+		maven { url 'https://repo.spring.io/snapshot' }
+		maven { url 'https://repo.spring.io/milestone' }
 endif::[]
 	}
 
@@ -301,14 +301,14 @@ To declare dependencies a typical `ivy.xml` file will look something like this:
 
 A typical `build.xml` will look like this:
 
-[source,xml,indent=0]
+[source,xml,indent=0,subs="verbatim,quotes,attributes"]
 ----
 	<project
 		xmlns:ivy="antlib:org.apache.ivy.ant"
 		xmlns:spring-boot="antlib:org.springframework.boot.ant"
 		name="myapp" default="build">
 
-		<property name="spring-boot.version" value="1.3.0.BUILD-SNAPSHOT" />
+		<property name="spring-boot.version" value="{spring-boot-version}" />
 
 		<target name="resolve" description="--> retrieve dependencies with ivy">
 			<ivy:retrieve pattern="lib/[conf]/[artifact]-[type]-[revision].[ext]" />
@@ -343,7 +343,6 @@ you don't want to use the `spring-boot-antlib` module.
 
 
 
-[[using-boot-starter-poms]]
 [[using-boot-starter]]
 === Starters
 Starters are a set of convenient dependency descriptors that you can include in your
@@ -418,14 +417,16 @@ and use a reversed domain name (for example, `com.example.project`).
 [[using-boot-locating-the-main-class]]
 === Locating the main application class
 We generally recommend that you locate your main application class in a root package
-above other classes. The `@EnableAutoConfiguration` annotation is often placed on your
-main class, and it implicitly defines a base "`search package`" for certain items. For
-example, if you are writing a JPA application, the package of the
-`@EnableAutoConfiguration` annotated class will be used to search for `@Entity` items.
+above other classes. The <<using-boot-using-springbootapplication-annotation,
+`@SpringBootApplication` annotation>> is often placed on your main class, and it
+implicitly defines a base "`search package`" for certain items. For example, if you are
+writing a JPA application, the package of the `@SpringBootApplication` annotated class
+will be used to search for `@Entity` items. Using a root package also allows component
+scan to apply only on your project.
 
-Using a root package also allows the `@ComponentScan` annotation to be used without
-needing to specify a `basePackage` attribute. You can also use the
-`@SpringBootApplication` annotation if your main class is in the root package.
+TIP: If you don't want to use `@SpringBootApplication`, the `@EnableAutoConfiguration`
+and `@ComponentScan` annotations that it imports defines that behaviour so you can also
+use that instead.
 
 Here is a typical layout:
 
@@ -448,20 +449,16 @@ Here is a typical layout:
 ----
 
 The `Application.java` file would declare the `main` method, along with the basic
-`@Configuration`.
+`@SpringBootApplication`.
 
 [source,java,indent=0]
 ----
 	package com.example.myproject;
 
 	import org.springframework.boot.SpringApplication;
-	import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-	import org.springframework.context.annotation.ComponentScan;
-	import org.springframework.context.annotation.Configuration;
+	import org.springframework.boot.autoconfigure.SpringBootApplication
 
-	@Configuration
-	@EnableAutoConfiguration
-	@ComponentScan
+	@SpringBootApplication
 	public class Application {
 
 		public static void main(String[] args) {
@@ -513,8 +510,9 @@ connection beans, then we will auto-configure an in-memory database.
 You need to opt-in to auto-configuration by adding the `@EnableAutoConfiguration` or
 `@SpringBootApplication` annotations to one of your `@Configuration` classes.
 
-TIP: You should only ever add one `@EnableAutoConfiguration` annotation. We generally
-recommend that you add it to your primary `@Configuration` class.
+TIP: You should only ever add one `@SpringBootApplication` or `@EnableAutoConfiguration`
+annotation. We generally recommend that you add one or the other to your primary
+`@Configuration` class only.
 
 
 
@@ -615,10 +613,16 @@ as `final`, indicating that it cannot be subsequently changed.
 
 [[using-boot-using-springbootapplication-annotation]]
 == Using the @SpringBootApplication annotation
-Many Spring Boot developers always have their main class annotated with `@Configuration`,
-`@EnableAutoConfiguration` and `@ComponentScan`. Since these annotations are so frequently
-used together (especially if you follow the <<using-boot-structuring-your-code, best practices>>
-above), Spring Boot provides a convenient `@SpringBootApplication` alternative.
+Many Spring Boot developers like their apps to use auto-configuration, component scan and
+be able to define extra configuration on their "application class". A single
+`@SpringBootApplication` annotation can be used to enable those three features, that is:
+
+* `@EnableAutoConfiguration`: enable <<using-boot-auto-configuration,Spring Boot's
+auto-configuration mechanism>>
+* `@ComponentScan`: enable `@Component` scan on the package where the application is
+located (see <<using-boot-structuring-your-code,the best practices>>)
+* `@Configuration`: allow to register extra beans in the context or import additional
+configuration classes
 
 The `@SpringBootApplication` annotation is equivalent to using `@Configuration`,
 `@EnableAutoConfiguration` and `@ComponentScan` with their default attributes:
@@ -643,6 +647,39 @@ The `@SpringBootApplication` annotation is equivalent to using `@Configuration`,
 
 NOTE: `@SpringBootApplication` also provides aliases to customize the attributes of
 `@EnableAutoConfiguration` and `@ComponentScan`.
+
+
+[NOTE]
+====
+None of these features are mandatory and you may choose to replace this single annotation
+by any of the features that it enables. For instance, you may not want to use component
+scan in your application:
+
+[source,java,indent=0]
+----
+	package com.example.myproject;
+
+	import org.springframework.boot.SpringApplication;
+	import org.springframework.context.annotation.ComponentScan
+	import org.springframework.context.annotation.Configuration;
+	import org.springframework.context.annotation.Import;
+
+	@Configuration
+	@EnableAutoConfiguration
+	@Import({ MyConfig.class, MyAnotherConfig.class })
+	public class Application {
+
+		public static void main(String[] args) {
+				SpringApplication.run(Application.class, args);
+		}
+
+	}
+----
+
+In this example, `Application` is just like any other Spring Boot application except that
+`@Component`-annotated classes are not detected automatically and the user-defined beans
+are imported explicitly (see `@Import`).
+====
 
 
 
@@ -773,17 +810,15 @@ devtools support, simply add the module dependency to your build:
 [source,groovy,indent=0,subs="attributes"]
 ----
 	dependencies {
-		compile("org.springframework.boot:spring-boot-devtools")
+		compileOnly("org.springframework.boot:spring-boot-devtools")
 	}
 ----
 
 NOTE: Developer tools are automatically disabled when running a fully packaged
 application. If your application is launched using `java -jar` or if it's started using a
 special classloader, then it is considered a "`production application`". Flagging the
-dependency as optional is a best practice that prevents devtools from being transitively
-applied to other modules using your project. Gradle does not support `optional`
-dependencies out-of-the-box so you may want to have a look to the
-{propdeps-plugin}[`propdeps-plugin`] in the meantime.
+dependency as optional in Maven or using `compileOnly` in Gradle is a best practice that
+prevents devtools from being transitively applied to other modules using your project.
 
 TIP: repackaged archives do not contain devtools by default. If you want to use
 <<using-boot-devtools-remote,certain remote devtools feature>>, you'll need to disable the
@@ -827,7 +862,7 @@ restart the application>>.
 As DevTools monitors classpath resources, the only way to trigger a restart is to update
 the classpath. The way in which you cause the classpath to be updated depends on the IDE
 that you are using. In Eclipse, saving a modified file will cause the classpath to be
-updated and trigger a restart. In IntelliJ IDEA, building the project (`Build +->+ Make
+updated and trigger a restart. In IntelliJ IDEA, building the project (`Build +->+ Build
 Project`) will have the same effect.
 ****
 
@@ -882,7 +917,7 @@ however it doesn't support as many frameworks and it isn't commercially supporte
 ==== Excluding resources
 Certain resources don't necessarily need to trigger a restart when they are changed. For
 example, Thymeleaf templates can just be edited in-place. By default changing resources
-in `/META-INF/maven`, `/META-INF/resources` ,`/resources` ,`/static` ,`/public` or
+in `/META-INF/maven`, `/META-INF/resources`, `/resources`, `/static`, `/public` or
 `/templates` will not trigger a restart but will trigger a
 <<using-boot-devtools-livereload, live reload>>. If you want to customize these exclusions
 you can use the `spring.devtools.restart.exclude` property. For example, to exclude only

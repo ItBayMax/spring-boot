@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2016 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -129,7 +129,7 @@ public class RedisAutoConfiguration {
 				factory.setPort(uri.getPort());
 				if (uri.getUserInfo() != null) {
 					String password = uri.getUserInfo();
-					int index = password.lastIndexOf(":");
+					int index = password.indexOf(":");
 					if (index >= 0) {
 						password = password.substring(index + 1);
 					}
@@ -195,9 +195,8 @@ public class RedisAutoConfiguration {
 		}
 
 		private JedisConnectionFactory createJedisConnectionFactory() {
-			JedisPoolConfig poolConfig = this.properties.getPool() != null
+			JedisPoolConfig poolConfig = (this.properties.getPool() != null)
 					? jedisPoolConfig() : new JedisPoolConfig();
-
 			if (getSentinelConfig() != null) {
 				return new JedisConnectionFactory(getSentinelConfig(), poolConfig);
 			}
@@ -229,7 +228,7 @@ public class RedisAutoConfiguration {
 		@ConditionalOnMissingBean(name = "redisTemplate")
 		public RedisTemplate<Object, Object> redisTemplate(
 				RedisConnectionFactory redisConnectionFactory)
-						throws UnknownHostException {
+				throws UnknownHostException {
 			RedisTemplate<Object, Object> template = new RedisTemplate<Object, Object>();
 			template.setConnectionFactory(redisConnectionFactory);
 			return template;
@@ -239,7 +238,7 @@ public class RedisAutoConfiguration {
 		@ConditionalOnMissingBean(StringRedisTemplate.class)
 		public StringRedisTemplate stringRedisTemplate(
 				RedisConnectionFactory redisConnectionFactory)
-						throws UnknownHostException {
+				throws UnknownHostException {
 			StringRedisTemplate template = new StringRedisTemplate();
 			template.setConnectionFactory(redisConnectionFactory);
 			return template;

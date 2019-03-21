@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -114,8 +114,8 @@ class ProjectLibraries implements Libraries {
 
 	private Set<GradleLibrary> getLibraries(String configurationName,
 			LibraryScope scope) {
-		Configuration configuration = (configurationName == null ? null
-				: this.project.getConfigurations().findByName(configurationName));
+		Configuration configuration = (configurationName != null)
+				? this.project.getConfigurations().findByName(configurationName) : null;
 		if (configuration == null) {
 			return null;
 		}
@@ -234,16 +234,16 @@ class ProjectLibraries implements Libraries {
 		}
 
 		@Override
-		public int hashCode() {
-			return getFile().hashCode();
-		}
-
-		@Override
 		public boolean equals(Object obj) {
 			if (obj instanceof GradleLibrary) {
 				return getFile().equals(((GradleLibrary) obj).getFile());
 			}
 			return false;
+		}
+
+		@Override
+		public int hashCode() {
+			return getFile().hashCode();
 		}
 
 		@Override
@@ -321,8 +321,8 @@ class ProjectLibraries implements Libraries {
 				String configurationName = (String) this.getTargetConfiguration
 						.invoke(projectDependency);
 				return projectDependency.getDependencyProject().getConfigurations()
-						.getByName(configurationName == null
-								? Dependency.DEFAULT_CONFIGURATION : configurationName);
+						.getByName((configurationName != null) ? configurationName
+								: Dependency.DEFAULT_CONFIGURATION);
 			}
 			catch (Exception ex) {
 				throw new RuntimeException("Failed to get target configuration", ex);

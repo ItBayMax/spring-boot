@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -83,7 +83,7 @@ public class NarayanaDataSourceBeanTests {
 		Connection mockConnection = mock(Connection.class);
 		XAConnection mockXaConnection = mock(XAConnection.class);
 		given(mockXaConnection.getConnection()).willReturn(mockConnection);
-		given(this.dataSource.getXAConnection("", "")).willReturn(mockXaConnection);
+		given(this.dataSource.getXAConnection()).willReturn(mockXaConnection);
 
 		Properties properties = new Properties();
 		properties.put(TransactionalDriver.XADataSource, this.dataSource);
@@ -93,7 +93,7 @@ public class NarayanaDataSourceBeanTests {
 
 		connection.commit();
 
-		verify(this.dataSource, times(1)).getXAConnection("", "");
+		verify(this.dataSource, times(1)).getXAConnection();
 		verify(mockXaConnection, times(1)).getConnection();
 		verify(mockConnection, times(1)).commit();
 	}

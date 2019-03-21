@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2015 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -98,7 +98,7 @@ public class SpringApplicationJsonEnvironmentPostProcessor
 
 	/**
 	 * Flatten the map keys using period separator.
-	 * @param map The map that should be flattened
+	 * @param map the map that should be flattened
 	 * @return the flattened map
 	 */
 	private Map<String, Object> flatten(Map<String, Object> map) {
@@ -109,7 +109,7 @@ public class SpringApplicationJsonEnvironmentPostProcessor
 
 	private void flatten(String prefix, Map<String, Object> result,
 			Map<String, Object> map) {
-		prefix = (prefix == null ? "" : prefix + ".");
+		prefix = (prefix != null) ? prefix + "." : "";
 		for (Map.Entry<String, Object> entry : map.entrySet()) {
 			extract(prefix + entry.getKey(), result, entry.getValue());
 		}

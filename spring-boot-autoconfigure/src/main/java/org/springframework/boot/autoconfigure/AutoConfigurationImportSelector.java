@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -232,7 +232,7 @@ public class AutoConfigurationImportSelector
 		RelaxedPropertyResolver resolver = new RelaxedPropertyResolver(getEnvironment(),
 				"spring.autoconfigure.");
 		String[] exclude = resolver.getProperty("exclude", String[].class);
-		return (Arrays.asList(exclude == null ? new String[0] : exclude));
+		return Arrays.asList((exclude != null) ? exclude : new String[0]);
 	}
 
 	private List<String> sort(List<String> configurations,
@@ -298,7 +298,7 @@ public class AutoConfigurationImportSelector
 
 	protected final List<String> asList(AnnotationAttributes attributes, String name) {
 		String[] value = attributes.getStringArray(name);
-		return Arrays.asList(value == null ? new String[0] : value);
+		return Arrays.asList((value != null) ? value : new String[0]);
 	}
 
 	private void fireAutoConfigurationImportEvents(List<String> configurations,

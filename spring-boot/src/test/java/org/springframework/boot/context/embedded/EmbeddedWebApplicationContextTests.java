@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2016 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -41,13 +41,17 @@ import org.mockito.Captor;
 import org.mockito.InOrder;
 import org.mockito.MockitoAnnotations;
 
+import org.springframework.beans.BeansException;
 import org.springframework.beans.MutablePropertyValues;
 import org.springframework.beans.factory.BeanCreationException;
 import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.config.ConstructorArgumentValues;
 import org.springframework.beans.factory.config.Scope;
+import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.RootBeanDefinition;
+import org.springframework.boot.testutil.InternalOutputCapture;
 import org.springframework.boot.web.servlet.DelegatingFilterProxyRegistrationBean;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.boot.web.servlet.ServletContextInitializer;
@@ -92,6 +96,9 @@ public class EmbeddedWebApplicationContextTests {
 
 	@Rule
 	public ExpectedException thrown = ExpectedException.none();
+
+	@Rule
+	public InternalOutputCapture output = new InternalOutputCapture();
 
 	private EmbeddedWebApplicationContext context;
 
@@ -466,7 +473,8 @@ public class EmbeddedWebApplicationContextTests {
 	}
 
 	@Test
-	public void doesNotReplaceExistingScopes() throws Exception { // gh-2082
+	public void doesNotReplaceExistingScopes() throws Exception {
+		// gh-2082
 		Scope scope = mock(Scope.class);
 		ConfigurableListableBeanFactory factory = this.context.getBeanFactory();
 		factory.registerScope(WebApplicationContext.SCOPE_REQUEST, scope);
@@ -480,6 +488,40 @@ public class EmbeddedWebApplicationContextTests {
 				.isSameAs(scope);
 		assertThat(factory.getRegisteredScope(WebApplicationContext.SCOPE_GLOBAL_SESSION))
 				.isSameAs(scope);
+	}
+
+	@Test
+	public void servletRequestCanBeInjectedEarly() throws Exception {
+		// gh-14990
+		int initialOutputLength = this.output.toString().length();
+		addEmbeddedServletContainerFactoryBean();
+		RootBeanDefinition beanDefinition = new RootBeanDefinition(
+				WithAutowiredServletRequest.class);
+		beanDefinition.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_CONSTRUCTOR);
+		this.context.registerBeanDefinition("withAutowiredServletRequest",
+				beanDefinition);
+		this.context.addBeanFactoryPostProcessor(new BeanFactoryPostProcessor() {
+
+			@Override
+			public void postProcessBeanFactory(
+					ConfigurableListableBeanFactory beanFactory) throws BeansException {
+				WithAutowiredServletRequest bean = beanFactory
+						.getBean(WithAutowiredServletRequest.class);
+				assertThat(bean.getRequest()).isNotNull();
+			}
+
+		});
+		this.context.refresh();
+		String output = this.output.toString().substring(initialOutputLength);
+		assertThat(output).doesNotContain("Replacing scope");
+	}
+
+	@Test
+	public void webApplicationScopeIsRegistered() throws Exception {
+		addEmbeddedServletContainerFactoryBean();
+		this.context.refresh();
+		assertThat(this.context.getBeanFactory()
+				.getRegisteredScope(WebApplicationContext.SCOPE_APPLICATION)).isNotNull();
 	}
 
 	private void addEmbeddedServletContainerFactoryBean() {
@@ -530,6 +572,20 @@ public class EmbeddedWebApplicationContextTests {
 		@Override
 		public void doFilter(ServletRequest request, ServletResponse response,
 				FilterChain chain) throws IOException, ServletException {
+		}
+
+	}
+
+	protected static class WithAutowiredServletRequest {
+
+		private final ServletRequest request;
+
+		public WithAutowiredServletRequest(ServletRequest request) {
+			this.request = request;
+		}
+
+		public ServletRequest getRequest() {
+			return this.request;
 		}
 
 	}

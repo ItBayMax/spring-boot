@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -30,14 +30,15 @@ import org.springframework.transaction.support.DefaultTransactionDefinition;
  * @author Lukas Eder
  * @author Andreas Ahlenstorf
  * @author Phillip Webb
+ * @since 1.5.10
  */
-class SpringTransactionProvider implements TransactionProvider {
+public class SpringTransactionProvider implements TransactionProvider {
 
 	// Based on the jOOQ-spring-example from https://github.com/jOOQ/jOOQ
 
 	private final PlatformTransactionManager transactionManager;
 
-	SpringTransactionProvider(PlatformTransactionManager transactionManager) {
+	public SpringTransactionProvider(PlatformTransactionManager transactionManager) {
 		this.transactionManager = transactionManager;
 	}
 

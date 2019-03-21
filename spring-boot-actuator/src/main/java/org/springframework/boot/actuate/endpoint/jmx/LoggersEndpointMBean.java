@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,6 +15,8 @@
  */
 
 package org.springframework.boot.actuate.endpoint.jmx;
+
+import java.util.Locale;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -52,7 +54,7 @@ public class LoggersEndpointMBean extends EndpointMBean {
 	@ManagedOperation(description = "Set log level for a given logger")
 	public void setLogLevel(String loggerName, String logLevel) {
 		Assert.notNull(logLevel, "LogLevel must not be null");
-		LogLevel level = LogLevel.valueOf(logLevel.toUpperCase());
+		LogLevel level = LogLevel.valueOf(logLevel.toUpperCase(Locale.ENGLISH));
 		getEndpoint().setLogLevel(loggerName, level);
 	}
 
